@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Control de Emprendimiento</title>
+  
+  <!-- Tipografía moderna -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- ESTILOS CSS INTEGRADOS -->
+  <style>
+    :root {
+      --bg-color: #0F172A;
+      --card-bg: #1E293B;
+      --sidebar-bg: #0B1120;
+      --text-primary: #F8FAFC;
+      --text-secondary: #94A3B8;
+      --primary-color: #6366F1;
+      --primary-hover: #4F46E5;
+      --accent-ia: #8B5CF6;
+      --alert-color: #EF4444;
+      --border-color: #334155;
+      --radius: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    .app-container {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* BARRA LATERAL */
+    .sidebar {
+      width: 260px;
+      background-color: var(--sidebar-bg);
+      border-right: 1px solid var(--border-color);
+      padding: 2rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .brand h2 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .brand .tag {
+      font-size: 0.75rem;
+      background: #1E1B4B;
+      color: #818CF8;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+    }
+
+    .menu {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .nav-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      padding: 0.8rem 1rem;
+      text-align: left;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .nav-btn:hover, .nav-btn.active {
+      background-color: var(--card-bg);
+      color: var(--text-primary);
+    }
+
+    .btn-ia-menu {
+      color: #C084FC;
+    }
+
+    /* CONTENIDO PRINCIPAL */
+    .content {
+      flex: 1;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+      max-width: 1200px;
+    }
+
+    /* MÉTRICAS */
+    .header-metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .card-metric {
+      background-color: var(--card-bg);
+      padding: 1.5rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border-color);
+    }
+
+    .metric-title {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .card-metric h3 {
+      font-size: 1.8rem;
+      margin-top: 0.5rem;
+      color: #fff;
+    }
+
+    .card-metric.alert h3 {
+      color: var(--alert-color);
+    }
+
+    /* TARJETAS Y SECCIONES */
+    .card-section {
+      background-color: var(--card-bg);
+      padding: 2rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border-color);
+    }
+
+    .section-header {
+      margin-bottom: 1.5rem;
+    }
+
+    .section-header h2 {
+      font-size: 1.25rem;
+      color: #fff;
+    }
+
+    .section-header p {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      margin-top: 0.25rem;
+    }
+
+    /* FORMULARIO */
+    .grid-form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .form-group label {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .form-group input {
+      background-color: var(--bg-color);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      padding: 0.75rem;
+      border-radius: 6px;
+      outline: none;
+    }
+
+    .form-group input:focus {
+      border-color: var(--primary-color);
+    }
+
+    .form-actions {
+      grid-column: 1 / -1;
+      margin-top: 0.5rem;
+    }
+
+    /* BOTONES */
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: 6px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-primary {
+      background-color: var(--primary-color);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .btn-ia {
+      background-color: var(--accent-ia);
+      color: white;
+    }
+
+    /* TABLA DE DATOS */
+    .table-responsive {
+      overflow-x: auto;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    .data-table th, .data-table td {
+      padding: 1rem;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.9rem;
+      color: var(--text-primary);
+    }
+
+    .data-table th {
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: var(--text-secondary);
+      padding: 2rem !important;
+    }
+
+    /* SECCIÓN ASISTENTE IA */
+    .ia-section {
+      border-color: var(--accent-ia);
+    }
+
+    .ia-box {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .ia-box textarea {
+      width: 100%;
+      height: 90px;
+      background-color: var(--bg-color);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      padding: 0.8rem;
+      border-radius: 6px;
+      resize: vertical;
+      font-family: inherit;
+    }
+
+    .ia-response {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      background-color: var(--bg-color);
+      border-radius: 6px;
+      border-left: 4px solid var(--accent-ia);
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- BARRA LATERAL -->
+    <aside class="sidebar">
+      <div class="brand">
+        <h2>🚀 MiControl</h2>
+        <span class="tag">Emprendedores</span>
+      </div>
+
+      <nav class="menu">
+        <button class="nav-btn active" id="btn-dashboard">📊 Dashboard</button>
+        <button class="nav-btn" id="btn-productos">📦 Productos</button>
+        <button class="nav-btn" id="btn-ventas">💰 Ventas</button>
+        <button class="nav-btn btn-ia-menu" id="btn-asistente">✨ Asistente IA</button>
+      </nav>
+    </aside>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="content">
+      
+      <!-- HEADER CON MÉTRICAS -->
+      <header class="header-metrics">
+        <div class="card-metric">
+          <span class="metric-title">Ventas Hoy</span>
+          <h3 id="metric-ventas">$0,00</h3>
+        </div>
+        <div class="card-metric">
+          <span class="metric-title">Total Productos</span>
+          <h3 id="metric-productos">0</h3>
+        </div>
+        <div class="card-metric alert">
+          <span class="metric-title">Stock Bajo</span>
+          <h3 id="metric-stock-alerta">0</h3>
+        </div>
+      </header>
+
+      <!-- SECCIÓN 1: FORMULARIO -->
+      <section class="card-section">
+        <div class="section-header">
+          <h2>Nuevo Producto</h2>
+          <p>Registrá tus ítems para llevar el control del stock y los precios.</p>
+        </div>
+
+        <form id="form-producto" class="grid-form">
+          <div class="form-group">
+            <label for="nombre">Nombre del Producto</label>
+            <input type="text" id="nombre" placeholder="Ej: Vino Malbec Reserva" required>
+          </div>
+
+          <div class="form-group">
+            <label for="categoria">Categoría</label>
+            <input type="text" id="categoria" placeholder="Ej: Vinos, Bebidas Blancas" required>
+          </div>
+
+          <div class="form-group">
+            <label for="precio-costo">Precio Costo ($)</label>
+            <input type="number" id="precio-costo" step="0.01" placeholder="0.00" required>
+          </div>
+
+          <div class="form-group">
+            <label for="precio-venta">Precio Venta ($)</label>
+            <input type="number" id="precio-venta" step="0.01" placeholder="0.00" required>
+          </div>
+
+          <div class="form-group">
+            <label for="stock">Stock Inicial</label>
+            <input type="number" id="stock" placeholder="0" required>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Guardar Producto</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- SECCIÓN 2: TABLA DE INVENTARIO -->
+      <section class="card-section">
+        <div class="section-header">
+          <h2>Inventario Actual</h2>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>Categoría</th>
+                <th>Costo</th>
+                <th>Venta</th>
+                <th>Stock</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-productos-body">
+              <tr>
+                <td colspan="6" class="empty-state">No hay productos registrados aún.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- SECCIÓN 3: ASISTENTE IA -->
+      <section class="card-section ia-section">
+        <div class="section-header">
+          <h2>✨ Asistente IA para tu Negocio</h2>
+          <p>Pedile sugerencias de precios, descripciones para redes o análisis de tus ventas.</p>
+        </div>
+
+        <div class="ia-box">
+          <textarea id="prompt-ia" placeholder="Ej: Sugerime un texto llamativo para promocionar mis vinos en Instagram..."></textarea>
+          <button id="btn-consultar-ia" class="btn btn-ia">Preguntar a la IA</button>
+        </div>
+
+        <div id="respuesta-ia" class="ia-response hidden">
+          <p class="ia-response-text">La respuesta del asistente aparecerá aquí...</p>
+        </div>
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- SCRIPTS (Se mantendrán separados como pediste al inicio para la lógica) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="conexion.js"></script>
+  <script src="repositorio.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

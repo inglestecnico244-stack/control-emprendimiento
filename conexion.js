@@ -1,0 +1,94 @@
+/* ==========================================================================
+   CONEXION.JS - Capa de Conexión a Supabase y Asistente IA
+   ========================================================================== */
+
+// 1. TUS CREDENCIALES DE SUPABASE (Reemplaza con tus datos cuando los tengas)
+const SUPABASE_URL = 'https://TU_PROYECTO.supabase.co';
+const SUPABASE_KEY = 'TU_SUPABASE_ANON_KEY';
+
+// Inicialización del cliente de Supabase
+let clienteSupabase = null;
+
+if (typeof supabase !== 'undefined' && SUPABASE_URL.includes('https://')) {
+  clienteSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  console.log('✅ Supabase conectado correctamente.');
+} else {
+  console.warn('⚠️ Supabase pendiente de credenciales reales.');
+}
+
+// 2. MÉTODOS DE CONEXIÓN CON LA BASE DE DATOS (Supabase / PostgreSQL)
+const ConexionDB = {
+
+  // Obtener productos desde la tabla 'productos' en Supabase
+  async obtenerProductos() {
+    if (!clienteSupabase) return [];
+
+    const { data, error } = await clienteSupabase
+      .from('productos')
+      .select('*')
+      .order('id', { ascending: false });
+
+    if (error) {
+      console.error('Error al obtener productos de Supabase:', error.message);
+      return [];
+    }
+    return data;
+  },
+
+  // Guardar un nuevo producto en la tabla 'productos' de Supabase
+  async guardarProducto(nuevoProducto) {
+    if (!clienteSupabase) {
+      throw new Error('Supabase no está conectado. Configura tus credenciales.');
+    }
+
+    const { data, error } = await clienteSupabase
+      .from('productos')
+      .insert([nuevoProducto])
+      .select();
+
+    if (error) {
+      console.error('Error al guardar en Supabase:', error.message);
+      return null;
+    }
+    return data[0];
+  },
+
+  // Eliminar un producto por ID en Supabase
+  async eliminarProducto(id) {
+    if (!clienteSupabase) return false;
+
+    const { error } = await clienteSupabase
+      .from('productos')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error al eliminar en Supabase:', error.message);
+      return false;
+    }
+    return true;
+  }
+};
+
+// 3. MÉTODOS DE CONEXIÓN CON EL ASISTENTE IA (Vía Edge Functions)
+const ConexionIA = {
+  async consultarAsistente(prompt, contextoNegocio = {}) {
+    try {
+      if (!clienteSupabase) {
+        return '💡 **Asistente:** Conecta Supabase para habilitar las consultas inteligentes en tiempo real.';
+      }
+
+      // Llamada oficial a una Supabase Edge Function para IA de forma segura
+      const { data, error } = await clienteSupabase.functions.invoke('asistente-ia', {
+        body: { prompt, contexto: contextoNegocio }
+      });
+
+      if (error) throw error;
+      return data.respuesta;
+
+    } catch (error) {
+      console.error('Error al conectar con la IA:', error);
+      return 'Ocurrió un error al procesar tu consulta con el asistente.';
+    }
+  }
+};
