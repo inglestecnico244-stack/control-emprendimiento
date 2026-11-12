@@ -1,73 +1,98 @@
 /* ==========================================================================
-   REPOSITORIO.JS - Capa de Lógica de Negocio y Estado
+   REPOSITORIO.JS - Lógica de Negocio y Estado Central
    ========================================================================== */
 
 const RepositorioNegocio = {
-  // Lista en memoria local para mantener la app ágil
   productos: [],
+  ventasHoy: 0,
 
-  // Cargar productos desde Supabase (o inicializar vacío)
+  // Inicializar cargando los productos desde Supabase
   async inicializar() {
     console.log('🔄 Sincronizando repositorio de datos...');
     this.productos = await ConexionDB.obtenerProductos();
-    return this.productos;
+    await this.calcularVentasHoy();
   },
 
-  // Registrar un nuevo producto con validaciones de negocio
-  async agregarProducto(datosFormulario) {
-    // 1. Validar que los datos numéricos sean correctos
-    const costo = parseFloat(datosFormulario.precio_costo);
-    const venta = parseFloat(datosFormulario.precio_venta);
-    const stockInicial = parseInt(datosFormulario.stock);
+  // Agregar un producto nuevo
+  async agregarProducto(datosProducto) {
+    const resultado = await ConexionDB.insertarProducto(datosProducto);
     
-    if (venta <= costo) {
-      console.warn('⚠️ Advertencia: El precio de venta es menor o igual al costo.');
-    }
-
-    const nuevoItem = {
-      nombre: datosFormulario.nombre,
-      categoria: datosFormulario.categoria,
-      precio_costo: costo,
-      precio_venta: venta,
-      stock: stockInicial
-    };
-
-    // 2. Insertar en Supabase a través de tu clase de conexión
-    const resultado = await ConexionDB.insertarProducto(nuevoItem);
-
     if (resultado.exito) {
-      // 3. Sincronizar el repositorio local para actualizar la interfaz
-      await this.inicializar();
+      this.productos.unshift(resultado.data); // Añadir al inicio del array local
       return { exito: true };
     } else {
       return { exito: false, mensaje: resultado.mensaje };
     }
   },
 
-  // Eliminar un producto por ID y refrescar la lista
+  // Eliminar un producto
   async eliminarProducto(id) {
-    console.log(`🗑️ Eliminando producto ID: ${id}...`);
-    const exito = await ConexionDB.eliminarProducto(id);
-
-    if (exito) {
-      // Sincronizar el estado local
-      await this.inicializar();
+    const exitoRemoto = await ConexionDB.eliminarProducto(id);
+    
+    if (exitoRemoto) {
+      this.productos = this.productos.filter(p => p.id !== id);
       return true;
     }
     return false;
   },
 
-  // Calcular métricas rápidas para el Dashboard
+  // Registrar una venta, descontar stock y sumar ingresos
+  async registrarVenta(productoId, cantidadVendida) {
+    // 1. Buscar el producto en la lista local
+    const producto = this.productos.find(p => p.id === productoId);
+    if (!producto) {
+      return { exito: false, mensaje: 'El producto seleccionado no existe.' };
+    }
+
+    // 2. Validar que haya suficiente stock
+    if (producto.stock < cantidadVendida) {
+      return { exito: false, mensaje: `Stock insuficiente. Solo quedan ${producto.stock} unidades.` };
+    }
+
+    // 3. Calcular el total de la venta
+    const totalVenta = producto.precio_venta * cantidadVendida;
+    const nuevoStock = producto.stock - cantidadVendida;
+
+    // 4. Actualizar el stock del producto en Supabase
+    const stockActualizado = await ConexionDB.actualizarStockProducto(productoId, nuevoStock);
+    if (!stockActualizado) {
+      return { exito: false, mensaje: 'No se pudo actualizar el stock en la base de datos.' };
+    }
+
+    // 5. Registrar la transacción en la tabla 'ventas' de Supabase
+    const ventaRegistrada = await ConexionDB.registrarVentaBD({
+      producto_id: producto.id,
+      nombre_producto: producto.nombre,
+      cantidad: cantidadVendida,
+      total_venta: totalVenta
+    });
+
+    if (!ventaRegistrada) {
+      return { exito: false, mensaje: 'Se descontó el stock pero falló el registro de la venta.' };
+    }
+
+    // 6. Actualizar el estado local
+    producto.stock = nuevoStock;
+    await this.calcularVentasHoy();
+
+    return { exito: true };
+  },
+
+  // Calcular el total de ventas del día actual
+  async calcularVentasHoy() {
+    this.ventasHoy = await ConexionDB.obtenerVentasHoyTotal();
+  },
+
+  // Obtener métricas para el Dashboard
   obtenerMetricas() {
     const totalProductos = this.productos.length;
-    
-    // Contar cuántos productos tienen stock menor o igual a 3 (alerta de stock bajo)
+    // Consideramos stock bajo si tiene 3 o menos unidades
     const stockBajo = this.productos.filter(p => p.stock <= 3).length;
 
     return {
-      ventasHoy: 0, // Se actualizará al integrar el módulo de ventas
       totalProductos,
-      stockBajo
+      stockBajo,
+      ventasHoy: this.ventasHoy
     };
   }
 };
