@@ -18,9 +18,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       const datos = {
         nombre: document.getElementById('nombre').value,
         categoria: document.getElementById('categoria').value,
-        precioCosto: document.getElementById('precio-costo').value,
-        precioVenta: document.getElementById('precio-venta').value,
-        stock: document.getElementById('stock').value
+        precio_costo: parseFloat(document.getElementById('precio-costo').value) || 0,
+        precio_venta: parseFloat(document.getElementById('precio-venta').value) || 0,
+        stock: parseInt(document.getElementById('stock').value) || 0
       };
 
       const resultado = await RepositorioNegocio.agregarProducto(datos);
@@ -53,8 +53,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       textoRespuesta.innerHTML = '⏳ Pensando respuesta...';
       contenedorRespuesta.classList.remove('hidden');
 
-      // Consultar al asistente
-      const respuestaIA = await ConexionIA.consultarAsistente(textoPrompt);
+      // Obtener la lista actual de productos del negocio para dársela como contexto a la IA
+      const productosActuales = RepositorioNegocio.productos;
+
+      // Consultar al asistente pasándole el texto y el inventario actual
+      const respuestaIA = await ConexionIA.consultarAsistente(textoPrompt, productosActuales);
       
       // Renderizar respuesta
       textoRespuesta.innerHTML = respuestaIA;
@@ -90,8 +93,29 @@ function actualizarInterfaz() {
       <td>$${Number(p.precio_costo).toFixed(2)}</td>
       <td>$${Number(p.precio_venta).toFixed(2)}</td>
       <td>${p.stock} un.</td>
-      <td><span style="color: var(--text-secondary); font-size: 0.85rem;">Activo</span></td>
+      <td>
+        <button onclick="manejarEliminarProducto(${p.id})" style="background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">
+          Eliminar
+        </button>
+      </td>
     `;
     tbody.appendChild(fila);
   });
 }
+
+// Función para manejar la eliminación de un producto
+async function manejarEliminarProducto(id) {
+  const confirmar = confirm('¿Estás seguro de que deseas eliminar este producto?');
+  
+  if (confirmar) {
+    const exito = await RepositorioNegocio.eliminarProducto(id);
+    
+    if (exito) {
+      alert('✅ Producto eliminado correctamente.');
+      actualizarInterfaz();
+    } else {
+      alert('❌ Ocurrió un error al intentar eliminar el producto.');
+    }
+  }
+}
+   
