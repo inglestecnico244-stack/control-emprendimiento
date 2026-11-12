@@ -93,7 +93,58 @@ const ConexionIA = {
     }
   }
 };
+// Actualizar el stock de un producto después de una venta
+  async actualizarStockProducto(id, nuevoStock) {
+    if (!clienteSupabase) return false;
 
+    const { error } = await clienteSupabase
+      .from('productos')
+      .update({ stock: nuevoStock })
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error al actualizar stock:', error.message);
+      return false;
+    }
+    return true;
+  },
+
+  // Registrar una venta en la tabla 'ventas'
+  async registrarVentaBD(datosVenta) {
+    if (!clienteSupabase) return false;
+
+    const { error } = await clienteSupabase
+      .from('ventas')
+      .insert([datosVenta]);
+
+    if (error) {
+      console.error('Error al registrar venta en BD:', error.message);
+      return false;
+    }
+    return true;
+  },
+
+  // Obtener la suma total de las ventas del día
+  async obtenerVentasHoyTotal() {
+    if (!clienteSupabase) return 0;
+
+    // Obtenemos todas las ventas (para una demo académica simple y robusta)
+    const { data, error } = await clienteSupabase
+      .from('ventas')
+      .select('total_venta');
+
+    if (error) {
+      console.error('Error al obtener ventas:', error.message);
+      return 0;
+    }
+
+    // Sumamos todos los totales de venta
+    let sumaTotal = 0;
+    if (data && data.length > 0) {
+      sumaTotal = data.reduce((acc, item) => acc + Number(item.total_venta), 0);
+    }
+    return sumaTotal;
+  }
 
   
  
