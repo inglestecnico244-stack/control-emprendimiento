@@ -2,9 +2,9 @@
    CONEXION.JS - Capa de Conexión a Supabase y Asistente IA
    ========================================================================== */
 
-// 1. TUS CREDENCIALES DE SUPABASE (Reemplaza con tus datos cuando los tengas)
-const SUPABASE_URL = 'https://TU_PROYECTO.supabase.co';
-const SUPABASE_KEY = 'TU_SUPABASE_ANON_KEY';
+// 1. TUS CREDENCIALES DE SUPABASE
+const SUPABASE_URL = 'https://lmqgxqhwujrtglyiiyjr.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_CePJYdnQu8w-H9G3wjDhJw_RGWryimX';
 
 // Inicialización del cliente de Supabase
 let clienteSupabase = null;
@@ -35,10 +35,10 @@ const ConexionDB = {
     return data;
   },
 
-  // Guardar un nuevo producto en la tabla 'productos' de Supabase
-  async guardarProducto(nuevoProducto) {
+  // Insertar un nuevo producto en la tabla 'productos' de Supabase
+  async insertarProducto(nuevoProducto) {
     if (!clienteSupabase) {
-      throw new Error('Supabase no está conectado. Configura tus credenciales.');
+      return { exito: false, mensaje: 'Supabase no está conectado. Configura tus credenciales.' };
     }
 
     const { data, error } = await clienteSupabase
@@ -48,9 +48,10 @@ const ConexionDB = {
 
     if (error) {
       console.error('Error al guardar en Supabase:', error.message);
-      return null;
+      return { exito: false, mensaje: error.message };
     }
-    return data[0];
+    
+    return { exito: true, data: data[0] };
   },
 
   // Eliminar un producto por ID en Supabase
@@ -92,3 +93,7 @@ const ConexionIA = {
     }
   }
 };
+
+
+  
+ 
