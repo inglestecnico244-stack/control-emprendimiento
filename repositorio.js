@@ -16,10 +16,10 @@ const RepositorioNegocio = {
   // Registrar un nuevo producto con validaciones de negocio
   async agregarProducto(datosFormulario) {
     // 1. Validar que los datos numéricos sean correctos
-    const costo = parseFloat(datosFormulario.precioCosto);
-    const venta = parseFloat(datosFormulario.precioVenta);
+    const costo = parseFloat(datosFormulario.precio_costo);
+    const venta = parseFloat(datosFormulario.precio_venta);
     const stockInicial = parseInt(datosFormulario.stock);
-
+    
     if (venta <= costo) {
       console.warn('⚠️ Advertencia: El precio de venta es menor o igual al costo.');
     }
@@ -32,16 +32,29 @@ const RepositorioNegocio = {
       stock: stockInicial
     };
 
-    // 2. Guardar en Supabase a través de conexion.js
-    const resultadoDB = await ConexionDB.guardarProducto(nuevoItem);
+    // 2. Insertar en Supabase a través de tu clase de conexión
+    const resultado = await ConexionDB.insertarProducto(nuevoItem);
 
-    if (resultadoDB) {
-      // Agregar al arreglo local
-      this.productos.unshift(resultadoDB);
-      return { exito: true, producto: resultadoDB };
+    if (resultado.exito) {
+      // 3. Sincronizar el repositorio local para actualizar la interfaz
+      await this.inicializar();
+      return { exito: true };
+    } else {
+      return { exito: false, mensaje: resultado.mensaje };
     }
+  },
 
-    return { exito: false, mensaje: 'No se pudo guardar el producto en la base de datos.' };
+  // Eliminar un producto por ID y refrescar la lista
+  async eliminarProducto(id) {
+    console.log(`🗑️ Eliminando producto ID: ${id}...`);
+    const exito = await ConexionDB.eliminarProducto(id);
+
+    if (exito) {
+      // Sincronizar el estado local
+      await this.inicializar();
+      return true;
+    }
+    return false;
   },
 
   // Calcular métricas rápidas para el Dashboard
