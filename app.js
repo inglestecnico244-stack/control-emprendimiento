@@ -5,7 +5,7 @@
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('🚀 Aplicación iniciada y DOM cargado.');
 
-  // 1. Inicializar datos al cargar la página
+  // 1. Inicializar datos al cargar la página (Descarga productos y calcula ventas)
   await RepositorioNegocio.inicializar();
   actualizarInterfaz();
 
@@ -35,72 +35,82 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // 3. Escuchar el botón del Asistente IA
-  const btnConsultarIA = document.getElementById('btn-consultar-ia');
-  if (btnConsultarIA) {
-    btnConsultarIA.addEventListener('click', async () => {
-      const promptInput = document.getElementById('prompt-ia');
-      const contenedorRespuesta = document.getElementById('respuesta-ia');
-      const textoRespuesta = contenedorRespuesta.querySelector('.ia-response-text');
+  // 3. Escuchar el envío del formulario para registrar una venta
+  const formVenta = document.getElementById('form-venta');
+  if (formVenta) {
+    formVenta.addEventListener('submit', async (e) => {
+      e.preventDefault();
 
-      const textoPrompt = promptInput.value.trim();
-      if (!textoPrompt) {
-        alert('Por favor, escribe una consulta para el asistente.');
+      const productoId = parseInt(document.getElementById('venta-producto-id').value);
+      const cantidadVendida = parseInt(document.getElementById('venta-cantidad').value);
+
+      if (!productoId || !cantidadVendida) {
+        alert('Por favor, selecciona un producto y una cantidad válida.');
         return;
       }
 
-      // Mostrar estado de carga
-      textoRespuesta.innerHTML = '⏳ Pensando respuesta...';
-      contenedorRespuesta.classList.remove('hidden');
+      // Llamamos a la función de negocio para procesar la venta
+      const resultado = await RepositorioNegocio.registrarVenta(productoId, cantidadVendida);
 
-      // Obtener la lista actual de productos del negocio para dársela como contexto a la IA
-      const productosActuales = RepositorioNegocio.productos;
-
-      // Consultar al asistente pasándole el texto y el inventario actual
-      const respuestaIA = await ConexionIA.consultarAsistente(textoPrompt, productosActuales);
-      
-      // Renderizar respuesta
-      textoRespuesta.innerHTML = respuestaIA;
+      if (resultado.exito) {
+        formVenta.reset();
+        actualizarInterfaz();
+        alert('✅ ¡Venta registrada y stock actualizado con éxito!');
+      } else {
+        alert(`❌ Error al registrar venta: ${resultado.mensaje}`);
+      }
     });
   }
 });
 
-// Función para actualizar la tabla y las métricas en la pantalla
+// Función para actualizar la tabla, métricas y selector de ventas en la pantalla
 function actualizarInterfaz() {
   // A. Actualizar métricas del Dashboard
   const metricas = RepositorioNegocio.obtenerMetricas();
   
   document.getElementById('metric-productos').textContent = metricas.totalProductos;
   document.getElementById('metric-stock-alerta').textContent = metricas.stockBajo;
+  document.getElementById('metric-ventas').textContent = `$${metricas.ventasHoy.toFixed(2)}`;
 
-  // B. Renderizar tabla de productos
+  // B. Renderizar tabla de inventario de productos
   const tbody = document.getElementById('tabla-productos-body');
-  if (!tbody) return;
+  if (tbody) {
+    const productos = RepositorioNegocio.productos;
 
-  const productos = RepositorioNegocio.productos;
-
-  if (productos.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" class="empty-state">No hay productos registrados aún.</td></tr>`;
-    return;
+    if (productos.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" class="empty-state">No hay productos registrados aún.</td></tr>`;
+    } else {
+      tbody.innerHTML = '';
+      productos.forEach(p => {
+        const fila = document.createElement('tr');
+        fila.innerHTML = `
+          <td><strong>${p.nombre}</strong></td>
+          <td>${p.categoria}</td>
+          <td>$${Number(p.precio_costo).toFixed(2)}</td>
+          <td>$${Number(p.precio_venta).toFixed(2)}</td>
+          <td>${p.stock} un.</td>
+          <td>
+            <button onclick="manejarEliminarProducto(${p.id})" style="background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">
+              Eliminar
+            </button>
+          </td>
+        `;
+        tbody.appendChild(fila);
+      });
+    }
   }
 
-  tbody.innerHTML = '';
-  productos.forEach(p => {
-    const fila = document.createElement('tr');
-    fila.innerHTML = `
-      <td><strong>${p.nombre}</strong></td>
-      <td>${p.categoria}</td>
-      <td>$${Number(p.precio_costo).toFixed(2)}</td>
-      <td>$${Number(p.precio_venta).toFixed(2)}</td>
-      <td>${p.stock} un.</td>
-      <td>
-        <button onclick="manejarEliminarProducto(${p.id})" style="background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">
-          Eliminar
-        </button>
-      </td>
-    `;
-    tbody.appendChild(fila);
-  });
+  // C. Llenar el selector de productos en el formulario de Ventas
+  const selectVentas = document.getElementById('venta-producto-id');
+  if (selectVentas) {
+    selectVentas.innerHTML = `<option value="">-- Selecciona un producto --</option>`;
+    RepositorioNegocio.productos.forEach(p => {
+      const option = document.createElement('option');
+      option.value = p.id;
+      option.textContent = `${p.nombre} (Stock: ${p.stock} - Venta: $${p.precio_venta})`;
+      selectVentas.appendChild(option);
+    });
+  }
 }
 
 // Función para manejar la eliminación de un producto
@@ -117,5 +127,4 @@ async function manejarEliminarProducto(id) {
       alert('❌ Ocurrió un error al intentar eliminar el producto.');
     }
   }
-}
-   
+}  
