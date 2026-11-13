@@ -220,8 +220,8 @@ function configurarEventosAutenticacion() {
         return;
       }
 
-      if (password.length < 6) {
-        mostrarMensajeAuth('La contraseña debe tener al menos 6 caracteres.');
+      if (password.length < 8) {
+        mostrarMensajeAuth('La contraseña debe tener al menos 8 caracteres.');
         return;
       }
 
@@ -497,7 +497,7 @@ function mostrarFormularioNuevaPassword() {
   campo.type = 'password';
   campo.id = 'nueva-password';
   campo.required = true;
-  campo.minLength = 6;
+  campo.minLength = 8;
   campo.autocomplete = 'new-password';
   campo.placeholder = 'Ingresá tu nueva contraseña';
 
@@ -508,7 +508,7 @@ function mostrarFormularioNuevaPassword() {
   campoConfirmar.type = 'password';
   campoConfirmar.id = 'confirmar-nueva-password';
   campoConfirmar.required = true;
-  campoConfirmar.minLength = 6;
+  campoConfirmar.minLength = 8;
   campoConfirmar.autocomplete = 'new-password';
   campoConfirmar.placeholder = 'Repetí tu nueva contraseña';
 
@@ -533,8 +533,8 @@ function mostrarFormularioNuevaPassword() {
     const password = campo.value;
     const confirmar = campoConfirmar.value;
 
-    if (password.length < 6) {
-      mostrarMensajeAuth('La contraseña debe tener al menos 6 caracteres.');
+    if (password.length < 8) {
+      mostrarMensajeAuth('La contraseña debe tener al menos 8 caracteres.');
       return;
     }
 
