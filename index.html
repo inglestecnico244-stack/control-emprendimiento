@@ -3,272 +3,759 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MiControl — Gestión Comercial Inteligente</title>
+  <meta name="theme-color" content="#173B50">
+  <meta name="description" content="MiControl: plataforma inteligente para administrar emprendimientos, productos, inventario y ventas.">
+
+  <title>MiControl — Gestión de tu Negocio</title>
+
   <link rel="stylesheet" href="style.css">
-  <!-- Google Fonts para tipografía de grado comercial -->
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
+
 <body>
 
-  <!-- BARRA LATERAL (SIDEBAR PROFESIONAL) -->
-  <aside class="sidebar">
-    <div class="sidebar-brand">
-      <div class="brand-icon">⚡</div>
-      <div class="brand-text">
-        <h2>MiControl</h2>
-        <span>Plataforma SaaS</span>
+  <!-- =====================================================
+       AUTENTICACIÓN
+       Inicio de sesión, registro y recuperación
+  ====================================================== -->
+
+  <main id="auth-screen" class="auth-screen">
+
+    <div class="auth-brand">
+      <div class="brand-icon">M</div>
+      <div>
+        <h1>MiControl</h1>
+        <span>GESTIÓN INTELIGENTE DE NEGOCIOS</span>
       </div>
     </div>
-    
-    <nav class="menu-lateral">
-      <div class="menu-label">PRINCIPAL</div>
-      <button class="btn-menu activo" onclick="cambiarVista('dashboard', this)">
-        <span class="icon">📊</span> Dashboard
-      </button>
-      <button class="btn-menu" onclick="cambiarVista('productos', this)">
-        <span class="icon">📦</span> Inventario
-      </button>
-      <button class="btn-menu" onclick="cambiarVista('ventas', this)">
-        <span class="icon">💳</span> Ventas & Caja
-      </button>
-      
-      <div class="menu-label" style="margin-top: 24px;">SISTEMA</div>
-      <button class="btn-menu" onclick="alert('Módulo de reportes avanzados próximamente')">
-        <span class="icon">📈</span> Reportes
-      </button>
-      <button class="btn-menu" onclick="alert('Configuración general de cuenta')">
-        <span class="icon">⚙️</span> Configuración
-      </button>
-    </nav>
 
-    <div class="sidebar-footer">
-      <div class="user-mini-card">
-        <div class="avatar-circle">AV</div>
-        <div class="user-info">
-          <strong>Emprendimiento</strong>
-          <span>Sesión Activa</span>
+    <div class="auth-container">
+
+      <!-- INICIO DE SESIÓN -->
+      <section id="auth-login" class="auth-card">
+
+        <div class="auth-heading">
+          <span class="auth-eyebrow">BIENVENIDO DE NUEVO</span>
+          <h2>Ingresá a tu cuenta</h2>
+          <p>Administrá tu emprendimiento desde un solo lugar.</p>
         </div>
-      </div>
+
+        <form id="form-login">
+
+          <div class="form-grupo">
+            <label for="login-email">Correo electrónico</label>
+            <input
+              type="email"
+              id="login-email"
+              name="email"
+              placeholder="nombre@correo.com"
+              autocomplete="email"
+              required
+            >
+          </div>
+
+          <div class="form-grupo">
+            <label for="login-password">Contraseña</label>
+            <input
+              type="password"
+              id="login-password"
+              name="password"
+              placeholder="Ingresá tu contraseña"
+              autocomplete="current-password"
+              required
+            >
+          </div>
+
+          <div class="auth-options">
+            <button
+              type="button"
+              class="auth-link"
+              data-auth-target="recuperar"
+            >
+              ¿Olvidaste tu contraseña?
+            </button>
+          </div>
+
+          <button type="submit" class="btn-auth-primary">
+            Iniciar sesión
+          </button>
+
+        </form>
+
+        <div class="auth-divider">
+          <span>¿Todavía no tenés cuenta?</span>
+        </div>
+
+        <button
+          type="button"
+          class="btn-auth-secondary"
+          data-auth-target="registro"
+        >
+          Crear una cuenta
+        </button>
+
+      </section>
+
+
+      <!-- REGISTRO -->
+      <section id="auth-registro" class="auth-card" hidden>
+
+        <div class="auth-heading">
+          <span class="auth-eyebrow">EMPEZÁ HOY</span>
+          <h2>Creá tu cuenta</h2>
+          <p>Registrá tu emprendimiento y comenzá a organizar tu negocio.</p>
+        </div>
+
+        <form id="form-registro">
+
+          <div class="form-fila">
+            <div class="form-grupo">
+              <label for="registro-nombre">Nombre</label>
+              <input
+                type="text"
+                id="registro-nombre"
+                name="nombre"
+                placeholder="Tu nombre"
+                autocomplete="given-name"
+                required
+              >
+            </div>
+
+            <div class="form-grupo">
+              <label for="registro-apellido">Apellido</label>
+              <input
+                type="text"
+                id="registro-apellido"
+                name="apellido"
+                placeholder="Tu apellido"
+                autocomplete="family-name"
+                required
+              >
+            </div>
+          </div>
+
+          <div class="form-grupo">
+            <label for="registro-emprendimiento">Nombre de tu emprendimiento</label>
+            <input
+              type="text"
+              id="registro-emprendimiento"
+              name="nombre_emprendimiento"
+              placeholder="Ej: Mi Tienda"
+              autocomplete="organization"
+              required
+            >
+          </div>
+
+          <div class="form-grupo">
+            <label for="registro-email">Correo electrónico</label>
+            <input
+              type="email"
+              id="registro-email"
+              name="email"
+              placeholder="nombre@correo.com"
+              autocomplete="email"
+              required
+            >
+          </div>
+
+          <div class="form-grupo">
+            <label for="registro-password">Contraseña</label>
+            <input
+              type="password"
+              id="registro-password"
+              name="password"
+              placeholder="Mínimo 8 caracteres"
+              minlength="8"
+              autocomplete="new-password"
+              required
+            >
+          </div>
+
+          <div class="form-grupo">
+            <label for="registro-password-confirmar">Repetir contraseña</label>
+            <input
+              type="password"
+              id="registro-password-confirmar"
+              name="password_confirmar"
+              placeholder="Repetí tu contraseña"
+              minlength="8"
+              autocomplete="new-password"
+              required
+            >
+          </div>
+
+          <button type="submit" class="btn-auth-primary">
+            Crear mi cuenta
+          </button>
+
+        </form>
+
+        <div class="auth-divider">
+          <span>¿Ya tenés una cuenta?</span>
+        </div>
+
+        <button
+          type="button"
+          class="btn-auth-secondary"
+          data-auth-target="login"
+        >
+          Volver al inicio de sesión
+        </button>
+
+      </section>
+
+
+      <!-- RECUPERACIÓN DE CONTRASEÑA -->
+      <section id="auth-recuperar" class="auth-card" hidden>
+
+        <div class="auth-heading">
+          <span class="auth-eyebrow">RECUPERAR ACCESO</span>
+          <h2>¿Olvidaste tu contraseña?</h2>
+          <p>Ingresá tu correo y te enviaremos las instrucciones para restablecerla.</p>
+        </div>
+
+        <form id="form-recuperar">
+
+          <div class="form-grupo">
+            <label for="recuperar-email">Correo electrónico</label>
+            <input
+              type="email"
+              id="recuperar-email"
+              name="email"
+              placeholder="nombre@correo.com"
+              autocomplete="email"
+              required
+            >
+          </div>
+
+          <button type="submit" class="btn-auth-primary">
+            Enviar instrucciones
+          </button>
+
+        </form>
+
+        <button
+          type="button"
+          class="btn-auth-secondary"
+          data-auth-target="login"
+        >
+          Volver al inicio de sesión
+        </button>
+
+      </section>
+
+
+      <!-- MENSAJES DE AUTENTICACIÓN -->
+      <div
+        id="auth-mensaje"
+        class="auth-message"
+        role="status"
+        aria-live="polite"
+        hidden
+      ></div>
+
     </div>
-  </aside>
 
-  <!-- CONTENEDOR GENERAL DE LA APLICACIÓN -->
-  <div class="app-container">
+    <footer class="auth-footer">
+      <span>MiControl © 2026</span>
+      <span>Gestión inteligente para emprendedores</span>
+    </footer>
 
-    <!-- BARRA SUPERIOR (TOPBAR SaaS) -->
-    <header class="topbar">
-      <div class="topbar-search">
-        <span class="search-icon">🔍</span>
-        <input type="text" placeholder="Buscar productos, ventas o registros...">
+  </main>
+
+
+  <!-- =====================================================
+       APLICACIÓN PRIVADA
+       Solo visible con una sesión autenticada
+  ====================================================== -->
+
+  <div id="app-shell" class="app-shell" hidden>
+
+    <!-- BARRA LATERAL -->
+    <aside class="sidebar">
+
+      <div class="sidebar-brand">
+        <div class="brand-icon">M</div>
+
+        <div class="brand-text">
+          <h2>MiControl</h2>
+          <span>GESTIÓN COMERCIAL</span>
+        </div>
       </div>
-      <div class="topbar-actions">
-        <button class="topbar-btn" title="Notificaciones">🔔 <span class="badge-dot"></span></button>
-        <button class="topbar-btn" title="Ayuda y Soporte">❓</button>
-        <div class="topbar-divider"></div>
-        <div class="current-date-pill" id="header-date"></div>
+
+      <nav class="menu-lateral">
+
+        <div class="menu-label">PRINCIPAL</div>
+
+        <button
+          class="btn-menu activo"
+          data-vista="dashboard"
+          onclick="cambiarVista('dashboard', this)"
+        >
+          <span class="icon">◫</span>
+          Dashboard
+        </button>
+
+        <button
+          class="btn-menu"
+          data-vista="productos"
+          onclick="cambiarVista('productos', this)"
+        >
+          <span class="icon">▦</span>
+          Inventario
+        </button>
+
+        <button
+          class="btn-menu"
+          data-vista="ventas"
+          onclick="cambiarVista('ventas', this)"
+        >
+          <span class="icon">↗</span>
+          Ventas y Caja
+        </button>
+
+        <div class="menu-label menu-label-spaced">SISTEMA</div>
+
+        <button
+          class="btn-menu"
+          type="button"
+          onclick="alert('Módulo de reportes avanzados próximamente')"
+        >
+          <span class="icon">▤</span>
+          Reportes
+        </button>
+
+        <button
+          class="btn-menu"
+          type="button"
+          onclick="alert('Configuración general próximamente')"
+        >
+          <span class="icon">⚙</span>
+          Configuración
+        </button>
+
+      </nav>
+
+      <div class="sidebar-footer">
+
+        <div class="user-mini-card">
+          <div class="avatar-circle" id="usuario-avatar">MC</div>
+
+          <div class="user-info">
+            <strong id="usuario-nombre">Mi cuenta</strong>
+            <span id="usuario-emprendimiento">Mi emprendimiento</span>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          id="btn-cerrar-sesion"
+          class="btn-logout"
+        >
+          <span>↪</span>
+          Cerrar sesión
+        </button>
+
       </div>
-    </header>
 
-    <!-- CONTENIDO PRINCIPAL (VISTAS SPA) -->
-    <main class="main-content">
+    </aside>
 
-      <!-- 1. VISTA DASHBOARD (Panel Empresarial Real) -->
-      <section id="vista-dashboard" class="vista-seccion">
-        
-        <!-- Cabecera de Bienvenida -->
-        <div class="dashboard-hero">
-          <div class="hero-text">
-            <h1>Panel General del Negocio</h1>
-            <p>Monitoreá el rendimiento de tu inventario, ventas y métricas clave en tiempo real.</p>
-          </div>
-          <div class="hero-actions">
-            <button class="btn-action-primary" onclick="cambiarVista('ventas', document.querySelectorAll('.menu-lateral button')[2])">
-              + Registrar Venta
-            </button>
-            <button class="btn-action-secondary" onclick="cambiarVista('productos', document.querySelectorAll('.menu-lateral button')[1])">
-              + Nuevo Producto
-            </button>
-          </div>
+
+    <!-- CONTENEDOR GENERAL -->
+    <div class="app-container">
+
+      <!-- BARRA SUPERIOR -->
+      <header class="topbar">
+
+        <div class="topbar-search">
+          <span class="search-icon">⌕</span>
+
+          <input
+            type="search"
+            id="busqueda-global"
+            placeholder="Buscar productos, ventas o registros..."
+            aria-label="Buscar en MiControl"
+          >
         </div>
 
-        <!-- Métricas KPI (4 Columnas) -->
-        <div class="metricas-grid">
-          <div class="card-metrica kpi-blue">
-            <div class="kpi-header">
-              <span>Ingresos de Hoy</span>
-              <div class="kpi-icon">💰</div>
-            </div>
-            <h2 id="metric-ventas">$0.00</h2>
-            <div class="kpi-footer trend-up"><span>↑ Actualizado al instante</span></div>
-          </div>
+        <div class="topbar-actions">
 
-          <div class="card-metrica kpi-sage">
-            <div class="kpi-header">
-              <span>Total Catálogo</span>
-              <div class="kpi-icon">📦</div>
-            </div>
-            <h2 id="metric-productos">0</h2>
-            <div class="kpi-footer"><span>Artículos activos en stock</span></div>
-          </div>
+          <button
+            class="topbar-btn"
+            type="button"
+            title="Notificaciones"
+            aria-label="Notificaciones"
+          >
+            ♧
+          </button>
 
-          <div class="card-metrica kpi-rose">
-            <div class="kpi-header">
-              <span>Alertas de Stock</span>
-              <div class="kpi-icon">⚠️</div>
-            </div>
-            <h2 id="metric-stock-alerta">0</h2>
-            <div class="kpi-footer alert-text"><span>Requieren reposición</span></div>
-          </div>
+          <button
+            class="topbar-btn"
+            type="button"
+            title="Ayuda y soporte"
+            aria-label="Ayuda y soporte"
+          >
+            ?
+          </button>
 
-          <div class="card-metrica kpi-lavender">
-            <div class="kpi-header">
-              <span>Estado del Sistema</span>
-              <div class="kpi-icon">🟢</div>
-            </div>
-            <h2>Óptimo</h2>
-            <div class="kpi-footer"><span>Conectado a Base de Datos</span></div>
-          </div>
+          <div class="topbar-divider"></div>
+
+          <div class="current-date-pill" id="header-date"></div>
+
         </div>
 
-        <!-- Bloque Inferior: Gráfico Simulado y Accesos / Actividad -->
-        <div class="dashboard-split-grid">
-          <div class="card-panel">
-            <div class="panel-header-flex">
-              <h3>Resumen Operativo</h3>
-              <span class="badge-pill">Tiempo Real</span>
+      </header>
+
+
+      <!-- CONTENIDO PRINCIPAL -->
+      <main class="main-content">
+
+
+        <!-- 1. DASHBOARD -->
+        <section id="vista-dashboard" class="vista-seccion">
+
+          <div class="dashboard-hero">
+
+            <div class="hero-text">
+              <span class="section-eyebrow">RESUMEN DE ACTIVIDAD</span>
+              <h1>Panel general</h1>
+              <p>Consultá el estado de tu negocio y mantené el control de tus operaciones.</p>
             </div>
-            <p class="panel-desc">Tu emprendimiento se encuentra operando con normalidad. Utiliza el menú lateral para administrar productos o procesar nuevas transacciones comerciales.</p>
-            
-            <div class="quick-stats-box">
-              <div class="stat-row">
-                <span>Eficiencia de Inventario</span>
-                <strong>98.5%</strong>
+
+            <div class="hero-actions">
+
+              <button
+                class="btn-action-primary"
+                type="button"
+                onclick="cambiarVista('ventas', document.querySelector('[data-vista=ventas]'))"
+              >
+                + Registrar venta
+              </button>
+
+              <button
+                class="btn-action-secondary"
+                type="button"
+                onclick="cambiarVista('productos', document.querySelector('[data-vista=productos]'))"
+              >
+                + Nuevo producto
+              </button>
+
+            </div>
+
+          </div>
+
+
+          <!-- MÉTRICAS -->
+          <div class="metricas-grid">
+
+            <div class="card-metrica kpi-blue">
+              <div class="kpi-header">
+                <span>Ingresos de hoy</span>
+                <div class="kpi-icon">↗</div>
               </div>
-              <div class="stat-row">
-                <span>Canal de Venta Principal</span>
-                <strong>Directo / Local</strong>
+
+              <h2 id="metric-ventas">$0,00</h2>
+
+              <div class="kpi-footer">
+                <span>Ventas registradas hoy</span>
               </div>
             </div>
+
+
+            <div class="card-metrica kpi-sage">
+              <div class="kpi-header">
+                <span>Total de productos</span>
+                <div class="kpi-icon">▦</div>
+              </div>
+
+              <h2 id="metric-productos">0</h2>
+
+              <div class="kpi-footer">
+                <span>Artículos en catálogo</span>
+              </div>
+            </div>
+
+
+            <div class="card-metrica kpi-rose">
+              <div class="kpi-header">
+                <span>Alertas de stock</span>
+                <div class="kpi-icon">!</div>
+              </div>
+
+              <h2 id="metric-stock-alerta">0</h2>
+
+              <div class="kpi-footer alert-text">
+                <span>Productos que requieren reposición</span>
+              </div>
+            </div>
+
+
+            <div class="card-metrica kpi-lavender">
+              <div class="kpi-header">
+                <span>Estado del sistema</span>
+                <div class="kpi-icon">●</div>
+              </div>
+
+              <h2 id="estado-sistema">Verificando</h2>
+
+              <div class="kpi-footer">
+                <span>Conexión con la plataforma</span>
+              </div>
+            </div>
+
           </div>
 
-          <div class="card-panel accent-panel">
-            <h3>Centro de Ayuda Rápida</h3>
-            <p class="panel-desc">¿Necesitás registrar transacciones velozmente? Recordá que al procesar una venta el stock se descuenta de forma automática.</p>
-            <ul class="tips-list">
-              <li>✓ Mantené tus precios de costo y venta actualizados.</li>
-              <li>✓ Verificá el indicador de stock bajo para evitar quiebres.</li>
-              <li>✓ Consultá la sección de inventario para altas y bajas.</li>
-            </ul>
+
+          <!-- INFORMACIÓN OPERATIVA -->
+          <div class="dashboard-split-grid">
+
+            <div class="card-panel">
+
+              <div class="panel-header-flex">
+                <h3>Resumen operativo</h3>
+                <span class="badge-pill">Mi negocio</span>
+              </div>
+
+              <p class="panel-desc">
+                Administrá tus productos, controlá las existencias y registrá tus ventas desde una misma plataforma.
+              </p>
+
+              <div class="quick-stats-box">
+
+                <div class="stat-row">
+                  <span>Productos registrados</span>
+                  <strong id="resumen-productos">0</strong>
+                </div>
+
+                <div class="stat-row">
+                  <span>Productos con stock bajo</span>
+                  <strong id="resumen-stock-bajo">0</strong>
+                </div>
+
+              </div>
+
+            </div>
+
+
+            <div class="card-panel accent-panel">
+
+              <h3>Centro de ayuda</h3>
+
+              <p class="panel-desc">
+                Algunas recomendaciones para mantener tu negocio organizado.
+              </p>
+
+              <ul class="tips-list">
+                <li>Actualizá los costos y precios de tus productos.</li>
+                <li>Controlá periódicamente el stock disponible.</li>
+                <li>Registrá cada venta para mantener tus datos actualizados.</li>
+              </ul>
+
+            </div>
+
           </div>
-        </div>
 
-      </section>
+        </section>
 
-      <!-- 2. VISTA PRODUCTOS (Inventario Profesional) -->
-      <section id="vista-productos" class="vista-seccion" style="display: none;">
-        <div class="section-header-title">
-          <h2>Gestión de Inventario</h2>
-          <p>Administrá los artículos de tu catálogo, costos, precios de venta y existencias actuales.</p>
-        </div>
 
-        <div class="card-formulario">
-          <h3>Registrar Nuevo Producto</h3>
-          <p>Completá los datos del artículo para incorporarlo al sistema.</p>
-          
-          <form id="form-producto">
-            <div class="form-fila">
+        <!-- 2. INVENTARIO -->
+        <section
+          id="vista-productos"
+          class="vista-seccion"
+          style="display: none;"
+        >
+
+          <div class="section-header-title">
+            <span class="section-eyebrow">ADMINISTRACIÓN</span>
+            <h2>Gestión de inventario</h2>
+            <p>Administrá los productos, costos, precios de venta y existencias de tu emprendimiento.</p>
+          </div>
+
+
+          <!-- FORMULARIO DE PRODUCTOS -->
+          <div class="card-formulario">
+
+            <h3>Registrar nuevo producto</h3>
+
+            <p>Completá la información para incorporar un artículo al catálogo.</p>
+
+            <form id="form-producto">
+
+              <div class="form-fila">
+
+                <div class="form-grupo">
+                  <label for="nombre">Nombre del producto o servicio</label>
+                  <input
+                    type="text"
+                    id="nombre"
+                    placeholder="Ej: Remera básica"
+                    required
+                  >
+                </div>
+
+                <div class="form-grupo">
+                  <label for="categoria">Categoría</label>
+                  <input
+                    type="text"
+                    id="categoria"
+                    placeholder="Ej: Indumentaria"
+                    required
+                  >
+                </div>
+
+              </div>
+
+
+              <div class="form-fila">
+
+                <div class="form-grupo">
+                  <label for="precio-costo">Precio de costo ($)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    id="precio-costo"
+                    placeholder="0,00"
+                    required
+                  >
+                </div>
+
+                <div class="form-grupo">
+                  <label for="precio-venta">Precio de venta ($)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    id="precio-venta"
+                    placeholder="0,00"
+                    required
+                  >
+                </div>
+
+              </div>
+
+
               <div class="form-grupo">
-                <label>Nombre del Producto / Servicio</label>
-                <input type="text" id="nombre" placeholder="Ej: Artículo Premium" required>
+                <label for="stock">Stock inicial</label>
+                <input
+                  type="number"
+                  id="stock"
+                  min="0"
+                  step="1"
+                  placeholder="0"
+                  required
+                >
               </div>
-              <div class="form-grupo">
-                <label>Categoría</label>
-                <input type="text" id="categoria" placeholder="Ej: General, Accesorios, etc." required>
-              </div>
-            </div>
-            <div class="form-fila">
-              <div class="form-grupo">
-                <label>Precio Costo ($)</label>
-                <input type="number" step="0.01" id="precio-costo" placeholder="0.00" required>
-              </div>
-              <div class="form-grupo">
-                <label>Precio Venta ($)</label>
-                <input type="number" step="0.01" id="precio-venta" placeholder="0.00" required>
-              </div>
-            </div>
-            <div class="form-grupo">
-              <label>Stock Inicial</label>
-              <input type="number" id="stock" placeholder="0" required>
-            </div>
-            <button type="submit" class="btn-primario">Guardar en Inventario</button>
-          </form>
-        </div>
 
-        <!-- Tabla Profesional de Inventario -->
-        <div class="card-tabla">
-          <div class="table-header-flex">
-            <h3>Catálogo Actual</h3>
-            <span class="table-counter">Sincronizado con Supabase</span>
+              <button type="submit" class="btn-primario">
+                Guardar producto
+              </button>
+
+            </form>
+
           </div>
-          <div class="table-responsive">
-            <table>
-              <thead>
-                <tr>
-                  <th>PRODUCTO</th>
-                  <th>CATEGORÍA</th>
-                  <th>COSTO</th>
-                  <th>VENTA</th>
-                  <th>STOCK</th>
-                  <th>ACCIONES</th>
-                </tr>
-              </thead>
-              <tbody id="tabla-productos-body">
-                <!-- Carga dinámica -->
-              </tbody>
-            </table>
+
+
+          <!-- TABLA DE INVENTARIO -->
+          <div class="card-tabla">
+
+            <div class="table-header-flex">
+              <h3>Catálogo de productos</h3>
+              <span class="table-counter">Inventario de tu negocio</span>
+            </div>
+
+            <div class="table-responsive">
+
+              <table>
+
+                <thead>
+                  <tr>
+                    <th>PRODUCTO</th>
+                    <th>CATEGORÍA</th>
+                    <th>COSTO</th>
+                    <th>VENTA</th>
+                    <th>STOCK</th>
+                    <th>ACCIONES</th>
+                  </tr>
+                </thead>
+
+                <tbody id="tabla-productos-body">
+                  <!-- Los productos se cargan dinámicamente -->
+                </tbody>
+
+              </table>
+
+            </div>
+
           </div>
-        </div>
-      </section>
 
-      <!-- 3. VISTA VENTAS (Punto de Venta / Caja) -->
-      <section id="vista-ventas" class="vista-seccion" style="display: none;">
-        <div class="section-header-title">
-          <h2>Registro de Ventas y Caja</h2>
-          <p>Procesá transacciones comerciales con actualización automática de stock y cálculo de ingresos.</p>
-        </div>
+        </section>
 
-        <div class="card-formulario max-w-lg">
-          <h3>Nueva Transacción</h3>
-          <p>Seleccioná el producto del inventario e indicá la cantidad a despachar.</p>
-          
-          <form id="form-venta">
-            <div class="form-grupo">
-              <label>Seleccionar Producto</label>
-              <select id="venta-producto-id" required>
-                <option value="">-- Seleccionar producto del catálogo --</option>
-              </select>
-            </div>
-            <div class="form-grupo">
-              <label>Cantidad Vendida</label>
-              <input type="number" id="venta-cantidad" value="1" min="1" required>
-            </div>
-            <button type="submit" class="btn-exito">Procesar Venta y Descontar Stock</button>
-          </form>
-        </div>
-      </section>
 
-    </main>
+        <!-- 3. VENTAS -->
+        <section
+          id="vista-ventas"
+          class="vista-seccion"
+          style="display: none;"
+        >
+
+          <div class="section-header-title">
+            <span class="section-eyebrow">OPERACIONES</span>
+            <h2>Registro de ventas y caja</h2>
+            <p>Registrá tus operaciones comerciales y actualizá automáticamente las existencias.</p>
+          </div>
+
+
+          <div class="card-formulario max-w-lg">
+
+            <h3>Nueva venta</h3>
+
+            <p>Seleccioná un producto e indicá la cantidad vendida.</p>
+
+            <form id="form-venta">
+
+              <div class="form-grupo">
+                <label for="venta-producto-id">Seleccionar producto</label>
+
+                <select id="venta-producto-id" required>
+                  <option value="">Seleccionar producto del catálogo</option>
+                </select>
+              </div>
+
+
+              <div class="form-grupo">
+                <label for="venta-cantidad">Cantidad vendida</label>
+
+                <input
+                  type="number"
+                  id="venta-cantidad"
+                  value="1"
+                  min="1"
+                  step="1"
+                  required
+                >
+              </div>
+
+
+              <button type="submit" class="btn-exito">
+                Procesar venta
+              </button>
+
+            </form>
+
+          </div>
+
+        </section>
+
+
+      </main>
+
+    </div>
+
   </div>
 
-  <!-- SCRIPTS DEL SISTEMA -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="conexion.js"></script>
-  <script src="repositorio.js"></script>
-  <script src="app.js"></script>
-  <script>
-    // Mostrar fecha actual formateada en la topbar
-    const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
-    document.getElementById('header-date').textContent = new Date().toLocaleDateString('es-AR', options);
-  </script>
-</body>
-</html>
+
+  <!-- ======================================
