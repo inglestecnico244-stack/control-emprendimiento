@@ -6,8 +6,10 @@
 let suscripcionAuth = null;
 let usuarioActualId = null;
 let procesandoAutenticacion = false;
+let procesandoVenta = false;
 let procesoSesionActual = null;
 let usuarioEnProcesoId = null;
+let versionProcesoSesion = 0;
 
 
 // ==========================================================================
@@ -32,10 +34,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         if (evento === 'SIGNED_OUT') {
+          versionProcesoSesion++;
+
           usuarioActualId = null;
+          usuarioEnProcesoId = null;
+
+          ConexionDB.establecerEmprendimiento(null);
+
           RepositorioNegocio.productos = [];
           RepositorioNegocio.ventasHoy = 0;
+
+          actualizarEstadoSistema('Desconectado');
           mostrarPantallaLogin();
+
           return;
         }
 
@@ -145,6 +156,7 @@ function limpiarMensajeAuth() {
 function configurarEventosAutenticacion() {
 
   // Navegación entre formularios.
+
   document.querySelectorAll('[data-auth-target]').forEach(boton => {
     boton.addEventListener('click', () => {
       mostrarPanelAuth(boton.dataset.authTarget);
@@ -331,17 +343,26 @@ function procesarSesion(sesion) {
     return Promise.resolve(false);
   }
 
-  if (usuarioActualId === usuario.id) {
-    return Promise.resolve(true);
-  }
+  // Si el mismo usuario ya se está procesando,
+  // reutilizar la carga existente.
 
-  // Evitar dos cargas simultáneas del mismo usuario.
   if (
     procesoSesionActual &&
     usuarioEnProcesoId === usuario.id
   ) {
     return procesoSesionActual;
   }
+
+  // Si el usuario ya está cargado y no hay otra carga pendiente.
+
+  if (usuarioActualId === usuario.id) {
+    return Promise.resolve(true);
+  }
+
+  // Identificar esta operación para evitar que una sesión
+  // anterior modifique la interfaz después de cerrar sesión.
+
+  const versionActual = ++versionProcesoSesion;
 
   usuarioEnProcesoId = usuario.id;
 
@@ -353,7 +374,15 @@ function procesarSesion(sesion) {
 
       const emprendimiento = await ConexionDB.obtenerEmprendimiento();
 
+      // Comprobar que la sesión siga siendo la misma.
+
+      if (versionActual !== versionProcesoSesion) {
+        return false;
+      }
+
       if (!emprendimiento) {
+        usuarioActualId = null;
+
         actualizarEstadoSistema('Pendiente de activación');
 
         mostrarPantallaLogin();
@@ -371,6 +400,17 @@ function procesarSesion(sesion) {
 
       const resultado = await RepositorioNegocio.inicializar();
 
+      // Evitar mostrar información si la sesión cambió
+      // mientras se cargaban los datos.
+
+      if (versionActual !== versionProcesoSesion) {
+        RepositorioNegocio.productos = [];
+        RepositorioNegocio.ventasHoy = 0;
+        ConexionDB.establecerEmprendimiento(null);
+
+        return false;
+      }
+
       if (!resultado?.exito) {
         throw new Error('No se pudo inicializar el repositorio.');
       }
@@ -386,6 +426,10 @@ function procesarSesion(sesion) {
     } catch (error) {
       console.error('Error al cargar el emprendimiento:', error);
 
+      if (versionActual !== versionProcesoSesion) {
+        return false;
+      }
+
       usuarioActualId = null;
 
       actualizarEstadoSistema('Error de conexión');
@@ -400,14 +444,16 @@ function procesarSesion(sesion) {
     }
   })();
 
-  procesoSesionActual = proceso;
-
-  return proceso.finally(() => {
-    if (procesoSesionActual === proceso) {
+  const procesoConLimpieza = proceso.finally(() => {
+    if (procesoSesionActual === procesoConLimpieza) {
       procesoSesionActual = null;
       usuarioEnProcesoId = null;
     }
   });
+
+  procesoSesionActual = procesoConLimpieza;
+
+  return procesoConLimpieza;
 }
 
 
@@ -465,10 +511,17 @@ function configurarCerrarSesion() {
         return;
       }
 
+      versionProcesoSesion++;
+
       usuarioActualId = null;
+      usuarioEnProcesoId = null;
+
+      ConexionDB.establecerEmprendimiento(null);
+
       RepositorioNegocio.productos = [];
       RepositorioNegocio.ventasHoy = 0;
 
+      actualizarEstadoSistema('Desconectado');
       mostrarPantallaLogin();
 
     } catch (error) {
@@ -557,6 +610,8 @@ function mostrarFormularioNuevaPassword() {
       return;
     }
 
+    boton.disabled = true;
+
     try {
       const resultado = await ConexionDB.actualizarPassword(password);
 
@@ -572,7 +627,15 @@ function mostrarFormularioNuevaPassword() {
       const resultadoCierre = await ConexionDB.cerrarSesion();
 
       if (resultadoCierre) {
+        versionProcesoSesion++;
+
         usuarioActualId = null;
+        usuarioEnProcesoId = null;
+
+        ConexionDB.establecerEmprendimiento(null);
+
+        RepositorioNegocio.productos = [];
+        RepositorioNegocio.ventasHoy = 0;
 
         if (formularioAnterior) {
           formularioAnterior.hidden = false;
@@ -594,6 +657,11 @@ function mostrarFormularioNuevaPassword() {
     } catch (error) {
       console.error('Error al actualizar contraseña:', error);
       mostrarMensajeAuth('Ocurrió un error al cambiar la contraseña.');
+
+    } finally {
+      if (formulario.isConnected) {
+        boton.disabled = false;
+      }
     }
   });
 }
@@ -661,6 +729,10 @@ function configurarEventosVentas() {
   formVenta.addEventListener('submit', async evento => {
     evento.preventDefault();
 
+    // Evitar envíos repetidos mientras se procesa una venta.
+
+    if (procesandoVenta) return;
+
     const productoId = document.getElementById('venta-producto-id').value;
     const cantidadVendida = document.getElementById('venta-cantidad').value;
 
@@ -669,17 +741,42 @@ function configurarEventosVentas() {
       return;
     }
 
-    const resultado = await RepositorioNegocio.registrarVenta(
-      productoId,
-      cantidadVendida
-    );
+    procesandoVenta = true;
 
-    if (resultado.exito) {
-      formVenta.reset();
-      actualizarInterfaz();
-      alert('✅ ¡Venta registrada y stock actualizado con éxito!');
-    } else {
-      alert(`❌ Error al registrar venta: ${resultado.mensaje}`);
+    const botonEnviar = formVenta.querySelector('[type="submit"]');
+    const textoOriginal = botonEnviar?.textContent;
+    const estadoOriginalBoton = botonEnviar?.disabled;
+
+    if (botonEnviar) {
+      botonEnviar.disabled = true;
+      botonEnviar.textContent = 'Registrando venta...';
+    }
+
+    try {
+      const resultado = await RepositorioNegocio.registrarVenta(
+        productoId,
+        cantidadVendida
+      );
+
+      if (resultado.exito) {
+        formVenta.reset();
+        actualizarInterfaz();
+        alert('✅ ¡Venta registrada y stock actualizado con éxito!');
+      } else {
+        alert(`❌ Error al registrar venta: ${resultado.mensaje}`);
+      }
+
+    } catch (error) {
+      console.error('Error al procesar la venta:', error);
+      alert('Ocurrió un error al registrar la venta. Revisá los datos e intentá nuevamente.');
+
+    } finally {
+      procesandoVenta = false;
+
+      if (botonEnviar) {
+        botonEnviar.disabled = estadoOriginalBoton;
+        botonEnviar.textContent = textoOriginal;
+      }
     }
   });
 }
