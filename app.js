@@ -127,4 +127,27 @@ async function manejarEliminarProducto(id) {
       alert('❌ Ocurrió un error al intentar eliminar el producto.');
     }
   }
-}  
+}
+
+// 🌟 FUNCIÓN DE NAVEGACIÓN SPA (Cambiar entre Dashboard, Productos y Ventas)
+function cambiarVista(nombreVista, botonElemento) {
+  // 1. Ocultar todas las secciones de vista
+  const secciones = document.querySelectorAll('.vista-seccion');
+  secciones.forEach(seccion => {
+    seccion.style.display = 'none';
+  });
+
+  // 2. Mostrar únicamente la sección seleccionada
+  const seccionActiva = document.getElementById(`vista-${nombreVista}`);
+  if (seccionActiva) {
+    seccionActiva.style.display = 'block';
+  }
+
+  // 3. Actualizar los estilos activos en los botones del menú lateral
+  const botonesMenu = document.querySelectorAll('.menu-lateral button');
+  botonesMenu.forEach(btn => btn.classList.remove('activo'));
+  
+  if (botonElemento) {
+    botonElemento.classList.add('activo');
+  }
+}
