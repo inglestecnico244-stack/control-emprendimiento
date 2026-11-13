@@ -133,7 +133,8 @@ const RepositorioNegocio = {
         };
       }
 
-      // Verificar disponibilidad de stock.
+      // Verificación preliminar del stock disponible.
+      // La validación definitiva se realizará en Supabase.
       if (Number(producto.stock) < cantidad) {
         return {
           exito: false,
@@ -141,9 +142,8 @@ const RepositorioNegocio = {
         };
       }
 
-      // Calcular importe y nuevo stock.
+      // Validar el importe antes de enviar la operación.
       const totalVenta = Number(producto.precio_venta) * cantidad;
-      const nuevoStock = Number(producto.stock) - cantidad;
 
       if (!Number.isFinite(totalVenta) || totalVenta <= 0) {
         return {
@@ -152,37 +152,33 @@ const RepositorioNegocio = {
         };
       }
 
-      // Actualizar stock en Supabase.
-      const stockActualizado = await ConexionDB.actualizarStockProducto(
-        idProducto,
-        nuevoStock
-      );
-
-      if (!stockActualizado) {
-        return {
-          exito: false,
-          mensaje: 'No se pudo actualizar el stock en la base de datos.'
-        };
-      }
-
-      // Registrar la venta.
-      const ventaRegistrada = await ConexionDB.registrarVentaBD({
+      // Registrar venta y descontar stock en una única
+      // operación transaccional de Supabase.
+      const resultado = await ConexionDB.registrarVentaAtomica({
         producto_id: idProducto,
-        nombre_producto: producto.nombre,
-        cantidad: cantidad,
-        total_venta: totalVenta
+        cantidad: cantidad
       });
 
-      if (!ventaRegistrada) {
+      if (!resultado?.exito) {
         return {
           exito: false,
-          mensaje: 'Se actualizó el stock, pero no se pudo registrar la venta. Es necesario revisar esta operación.'
+          mensaje: resultado?.mensaje || 'No se pudo registrar la venta.'
         };
       }
 
-      // Actualizar el estado local.
-      producto.stock = nuevoStock;
+      // Actualizar el stock local con el valor confirmado por Supabase.
+      if (
+        resultado.data &&
+        Number.isSafeInteger(Number(resultado.data.stock_restante))
+      ) {
+        producto.stock = Number(resultado.data.stock_restante);
+      } else {
+        // Si la respuesta no incluye el stock restante,
+        // sincronizar nuevamente los productos.
+        this.productos = await ConexionDB.obtenerProductos();
+      }
 
+      // Actualizar el total de ventas del día.
       await this.calcularVentasHoy();
 
       return { exito: true };
