@@ -1237,3 +1237,114 @@ font-size: 1.8rem;
 }
 
 /* FIN DEL SISTEMA VISUAL MICONTROL */
+
+/* ==========================================================
+   AJUSTES DE AUTENTICACIÓN Y RESPONSIVE
+   ========================================================== */
+
+/* Organización general de la pantalla de acceso */
+
+#auth-screen {
+  flex-direction: column;
+  gap: 22px;
+}
+
+.auth-brand {
+  width: 100%;
+  max-width: 460px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.auth-brand h1 {
+  margin-bottom: 2px;
+}
+
+.auth-brand span {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+}
+
+.auth-container {
+  width: 100%;
+  max-width: 460px;
+}
+
+.auth-heading {
+  margin-bottom: 22px;
+}
+
+.auth-eyebrow {
+  display: block;
+  color: var(--success);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+
+.auth-options {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 22px 0 12px;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.btn-auth-secondary {
+  width: 100%;
+  padding: 11px;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: var(--radius-md);
+  background: #ffffff !important;
+}
+
+.auth-footer {
+  width: 100%;
+  max-width: 460px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+
+/* Estados de los mensajes de autenticación */
+
+#auth-mensaje.error {
+  color: var(--danger);
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-border);
+}
+
+#auth-mensaje.exito {
+  color: var(--success);
+  background: var(--success-bg);
+  border: 1px solid var(--success-border);
+}
+
+/* Ajustes para pantallas pequeñas */
+
+@media (max-width: 480px) {
+  #auth-screen {
+    gap: 16px;
+  }
+
+  .auth-footer {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+}
