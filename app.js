@@ -6,6 +6,9 @@
 let suscripcionAuth = null;
 let usuarioActualId = null;
 let procesandoAutenticacion = false;
+let procesoSesionActual = null;
+let usuarioEnProcesoId = null;
+
 
 // ==========================================================================
 // INICIO DE LA APLICACIÓN
@@ -20,35 +23,34 @@ document.addEventListener('DOMContentLoaded', async () => {
   configurarCerrarSesion();
 
   // Escuchar cambios en la autenticación.
-  if (typeof ConexionDB.escucharCambiosAuth === 'function') {
-    suscripcionAuth = ConexionDB.escucharCambiosAuth(
-      (evento, sesion) => {
-        // Evitar operaciones Supabase dentro del callback de Auth.
-        Promise.resolve().then(async () => {
-          if (evento === 'PASSWORD_RECOVERY') {
-            mostrarFormularioNuevaPassword();
-            return;
-          }
+  suscripcionAuth = ConexionDB.escucharCambiosAuth(
+    (evento, sesion) => {
+      // Las operaciones se ejecutan después del callback de Supabase Auth.
+      Promise.resolve().then(async () => {
 
-          if (evento === 'SIGNED_OUT') {
-            usuarioActualId = null;
-            mostrarPantallaLogin();
-            return;
-          }
+        if (evento === 'PASSWORD_RECOVERY') {
+          mostrarFormularioNuevaPassword();
+          return;
+        }
 
-          if (sesion?.user) {
-            await procesarSesion(sesion);
-          }
-        });
-      }
-    );
-  }
+        if (evento === 'SIGNED_OUT') {
+          usuarioActualId = null;
+          RepositorioNegocio.productos = [];
+          RepositorioNegocio.ventasHoy = 0;
+          mostrarPantallaLogin();
+          return;
+        }
+
+        if (sesion?.user) {
+          await procesarSesion(sesion);
+        }
+      });
+    }
+  );
 
   // Comprobar si ya existe una sesión.
   try {
-    const resultado = await ConexionDB.obtenerSesion();
-
-    const sesion = resultado?.data?.session || resultado?.session || null;
+    const sesion = await ConexionDB.obtenerSesion();
 
     if (sesion?.user) {
       await procesarSesion(sesion);
@@ -64,7 +66,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
 // ==========================================================================
-// AUTENTICACIÓN
+// PANTALLAS DE AUTENTICACIÓN
 // ==========================================================================
 
 function mostrarPantallaLogin() {
@@ -125,15 +127,20 @@ function limpiarMensajeAuth() {
   }
 }
 
+
+// ==========================================================================
+// CONFIGURAR AUTENTICACIÓN
+// ==========================================================================
+
 function configurarEventosAutenticacion() {
 
-  // Navegación entre formularios de autenticación.
+  // Navegación entre formularios.
   document.querySelectorAll('[data-auth-target]').forEach(boton => {
     boton.addEventListener('click', () => {
-      const destino = boton.dataset.authTarget;
-      mostrarPanelAuth(destino);
+      mostrarPanelAuth(boton.dataset.authTarget);
     });
   });
+
 
   // ------------------------------------------------------------------------
   // INICIAR SESIÓN
@@ -167,18 +174,15 @@ function configurarEventosAutenticacion() {
           return;
         }
 
-        const sesion = resultado.data?.session || resultado.data;
+        // conexion.js devuelve la sesión dentro de resultado.data.
+        const sesion = resultado.data?.session;
 
         if (sesion?.user) {
           await procesarSesion(sesion);
         } else {
-          const sesionActual = await ConexionDB.obtenerSesion();
-          const sesionRecuperada =
-            sesionActual?.data?.session || sesionActual?.session;
-
-          if (sesionRecuperada?.user) {
-            await procesarSesion(sesionRecuperada);
-          }
+          mostrarMensajeAuth(
+            'No se pudo recuperar la sesión. Intentá nuevamente.'
+          );
         }
 
       } catch (error) {
@@ -191,8 +195,9 @@ function configurarEventosAutenticacion() {
     });
   }
 
+
   // ------------------------------------------------------------------------
-  // REGISTRO
+  // REGISTRO DE USUARIO
   // ------------------------------------------------------------------------
 
   const formRegistro = document.getElementById('form-registro');
@@ -244,7 +249,6 @@ function configurarEventosAutenticacion() {
         }
 
         formRegistro.reset();
-
         mostrarPanelAuth('login');
 
         mostrarMensajeAuth(
@@ -261,6 +265,7 @@ function configurarEventosAutenticacion() {
       }
     });
   }
+
 
   // ------------------------------------------------------------------------
   // RECUPERAR CONTRASEÑA
@@ -306,77 +311,92 @@ function configurarEventosAutenticacion() {
 
 
 // ==========================================================================
-// PROCESAR SESIÓN Y CARGAR EL EMPRENDIMIENTO
+// PROCESAR SESIÓN Y CARGAR EMPRENDIMIENTO
 // ==========================================================================
 
-async function procesarSesion(sesion) {
+function procesarSesion(sesion) {
   const usuario = sesion?.user;
 
   if (!usuario) {
     mostrarPantallaLogin();
-    return;
+    return Promise.resolve(false);
   }
 
-  // Evitar cargar dos veces la misma sesión.
-  if (procesandoAutenticacion) return;
+  if (usuarioActualId === usuario.id) {
+    return Promise.resolve(true);
+  }
 
-  if (usuarioActualId === usuario.id) return;
+  // Evitar dos cargas simultáneas del mismo usuario.
+  if (
+    procesoSesionActual &&
+    usuarioEnProcesoId === usuario.id
+  ) {
+    return procesoSesionActual;
+  }
 
-  procesandoAutenticacion = true;
+  usuarioEnProcesoId = usuario.id;
 
-  try {
-    console.log('🔐 Usuario autenticado. Buscando emprendimiento...');
+  const proceso = (async () => {
+    try {
+      console.log('🔐 Usuario autenticado. Buscando emprendimiento...');
 
-    const emprendimiento = await ConexionDB.obtenerEmprendimiento();
+      const emprendimiento = await ConexionDB.obtenerEmprendimiento();
 
-    if (!emprendimiento) {
+      if (!emprendimiento) {
+        mostrarPantallaLogin();
+
+        mostrarMensajeAuth(
+          'No encontramos un emprendimiento asociado a esta cuenta. Verificá que hayas confirmado tu correo electrónico.'
+        );
+
+        return false;
+      }
+
+      usuarioActualId = usuario.id;
+
+      actualizarDatosUsuario(usuario, emprendimiento);
+
+      const resultado = await RepositorioNegocio.inicializar();
+
+      if (!resultado?.exito) {
+        throw new Error('No se pudo inicializar el repositorio.');
+      }
+
+      actualizarInterfaz();
+      mostrarPantallaPrincipal();
+
+      console.log('✅ MiControl listo para trabajar.');
+
+      return true;
+
+    } catch (error) {
+      console.error('Error al cargar el emprendimiento:', error);
+
+      usuarioActualId = null;
+
       mostrarPantallaLogin();
 
       mostrarMensajeAuth(
-        'No encontramos un emprendimiento asociado a esta cuenta. Verificá que hayas confirmado tu correo electrónico.'
+        'No se pudo cargar tu emprendimiento. Intentá nuevamente.'
       );
 
-      return;
+      return false;
     }
+  })();
 
-    // Guardar la identidad del usuario activo.
-    usuarioActualId = usuario.id;
+  procesoSesionActual = proceso;
 
-    // Actualizar información de la interfaz.
-    actualizarDatosUsuario(usuario, emprendimiento);
-
-    // Cargar exclusivamente los datos del emprendimiento.
-    const resultado = await RepositorioNegocio.inicializar();
-
-    if (!resultado?.exito) {
-      throw new Error('No se pudo inicializar el repositorio.');
+  return proceso.finally(() => {
+    if (procesoSesionActual === proceso) {
+      procesoSesionActual = null;
+      usuarioEnProcesoId = null;
     }
-
-    actualizarInterfaz();
-
-    mostrarPantallaPrincipal();
-
-    console.log('✅ MiControl listo para trabajar.');
-
-  } catch (error) {
-    console.error('Error al cargar el emprendimiento:', error);
-
-    usuarioActualId = null;
-
-    mostrarPantallaLogin();
-
-    mostrarMensajeAuth(
-      'No se pudo cargar tu emprendimiento. Intentá nuevamente.'
-    );
-
-  } finally {
-    procesandoAutenticacion = false;
-  }
+  });
 }
 
 
 // ==========================================================================
-// DATOS DEL USUARIO EN LA INTERFAZ
+// INFORMACIÓN DEL USUARIO
 // ==========================================================================
 
 function actualizarDatosUsuario(usuario, emprendimiento) {
@@ -422,10 +442,11 @@ function configurarCerrarSesion() {
     if (!confirmar) return;
 
     try {
+      // conexion.js devuelve true o false, no un objeto con exito.
       const resultado = await ConexionDB.cerrarSesion();
 
-      if (!resultado?.exito) {
-        alert(resultado?.mensaje || 'No se pudo cerrar la sesión.');
+      if (!resultado) {
+        alert('No se pudo cerrar la sesión.');
         return;
       }
 
@@ -444,7 +465,7 @@ function configurarCerrarSesion() {
 
 
 // ==========================================================================
-// NUEVA CONTRASEÑA DESPUÉS DE RECUPERACIÓN
+// RECUPERACIÓN Y CAMBIO DE CONTRASEÑA
 // ==========================================================================
 
 function mostrarFormularioNuevaPassword() {
@@ -454,8 +475,14 @@ function mostrarFormularioNuevaPassword() {
 
   if (!panel) return;
 
-  // Evitar duplicar el formulario.
   if (document.getElementById('form-nueva-password')) return;
+
+  // Ocultar el formulario original de solicitud de recuperación.
+  const formularioAnterior = document.getElementById('form-recuperar');
+
+  if (formularioAnterior) {
+    formularioAnterior.hidden = true;
+  }
 
   const formulario = document.createElement('form');
   formulario.id = 'form-nueva-password';
@@ -528,19 +555,26 @@ function mostrarFormularioNuevaPassword() {
 
       formulario.remove();
 
-      mostrarMensajeAuth(
-        '¡Contraseña actualizada correctamente! Ya podés iniciar sesión.',
-        'exito'
-      );
-
+      // Cerrar la sesión de recuperación después de cambiar la contraseña.
       const resultadoCierre = await ConexionDB.cerrarSesion();
 
-      if (resultadoCierre?.exito) {
+      if (resultadoCierre) {
         usuarioActualId = null;
+
+        if (formularioAnterior) {
+          formularioAnterior.hidden = false;
+        }
+
         mostrarPantallaLogin();
+
         mostrarMensajeAuth(
           '¡Contraseña actualizada correctamente! Iniciá sesión con tu nueva contraseña.',
           'exito'
+        );
+      } else {
+        mostrarMensajeAuth(
+          'La contraseña se actualizó, pero no se pudo cerrar la sesión. Cerrala antes de continuar.',
+          'error'
         );
       }
 
@@ -553,7 +587,7 @@ function mostrarFormularioNuevaPassword() {
 
 
 // ==========================================================================
-// CONFIGURAR FORMULARIO DE PRODUCTOS
+// FORMULARIO DE PRODUCTOS
 // ==========================================================================
 
 function configurarEventosProductos() {
@@ -603,7 +637,7 @@ function configurarEventosProductos() {
 
 
 // ==========================================================================
-// CONFIGURAR FORMULARIO DE VENTAS
+// FORMULARIO DE VENTAS
 // ==========================================================================
 
 function configurarEventosVentas() {
@@ -643,10 +677,9 @@ function configurarEventosVentas() {
 // ==========================================================================
 
 function actualizarInterfaz() {
+  const metricas = RepositorioNegocio.obtenerMetricas();
 
   // A. Métricas del dashboard.
-
-  const metricas = RepositorioNegocio.obtenerMetricas();
 
   const elementoProductos = document.getElementById('metric-productos');
   const elementoStock = document.getElementById('metric-stock-alerta');
@@ -661,7 +694,8 @@ function actualizarInterfaz() {
   }
 
   if (elementoVentas) {
-    elementoVentas.textContent = `$${Number(metricas.ventasHoy).toFixed(2)}`;
+    elementoVentas.textContent =
+      `$${Number(metricas.ventasHoy).toFixed(2)}`;
   }
 
   // B. Tabla de inventario.
@@ -736,7 +770,7 @@ function actualizarInterfaz() {
     }
   }
 
-  // C. Selector de productos para registrar ventas.
+  // C. Selector de productos para ventas.
 
   const selectVentas = document.getElementById('venta-producto-id');
 
@@ -760,7 +794,7 @@ function actualizarInterfaz() {
     });
   }
 
-  // D. Resumen de productos y stock.
+  // D. Resúmenes adicionales.
 
   const resumenProductos = document.getElementById('resumen-productos');
   const resumenStock = document.getElementById('resumen-stock-bajo');
@@ -802,7 +836,6 @@ async function manejarEliminarProducto(id) {
 // ==========================================================================
 
 function cambiarVista(nombreVista, botonElemento) {
-
   const secciones = document.querySelectorAll('.vista-seccion');
 
   secciones.forEach(seccion => {
