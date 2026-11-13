@@ -1,83 +1,97 @@
 /* ==========================================================================
-   ESTILOS GENERALES - TEMA CLARO Y TONOS PASTELES
+   ESTILOS GENERALES - DISEÑO PROFESIONAL PASTEL
    ========================================================================== */
+:root {
+  --bg-main: #f8fafc;
+  --bg-sidebar: #ffffff;
+  --text-main: #1e293b;
+  --text-muted: #64748b;
+  --border-color: #e2e8f0;
+  
+  /* Tonos Pasteles Sofisticados */
+  --pastel-verde: #d1fae5;  /* Menta suave */
+  --pastel-rosa: #ffe4e6;   /* Rosa suave */
+  --pastel-amarillo: #fef3c7; /* Amarillo cálido */
+  --pastel-azul: #e0f2fe;   /* Azul claro institucional */
+  
+  --accent-blue: #0284c7;
+  --accent-green: #059669;
+}
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
 
 body {
-  background-color: #f8fafc; /* Fondo general muy suave */
-  color: #1e293b;            /* Texto principal oscuro para alta legibilidad */
+  background-color: var(--bg-main);
+  color: var(--text-main);
   display: flex;
   min-height: 100vh;
 }
 
 /* ==========================================================================
-   BARRA LATERAL (SIDEBAR) CLARA
+   BARRA LATERAL (SIDEBAR) RESPONSIVA
    ========================================================================== */
 .sidebar {
-  width: 260px;
-  background-color: #ffffff;
-  border-right: 1px solid #e2e8f0;
+  width: 280px;
+  background-color: var(--bg-sidebar);
+  border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
-  padding: 20px;
+  padding: 24px;
   position: fixed;
   height: 100vh;
   left: 0;
   top: 0;
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.02);
+  z-index: 100;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.02);
+  transition: transform 0.3s ease;
 }
 
 .logo {
-  font-size: 1.3rem;
-  font-weight: bold;
+  font-size: 1.4rem;
+  font-weight: 700;
   color: #0f172a;
-  margin-bottom: 30px;
+  margin-bottom: 35px;
   display: flex;
   align-items: center;
-  gap: 10px;
-}
-
-/* Estilo por si quieres agregar una imagen de logo después */
-.logo img {
-  width: 32px;
-  height: 32px;
-  object-fit: contain;
+  gap: 12px;
+  letter-spacing: -0.5px;
 }
 
 .menu-lateral {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .btn-menu {
   background: transparent;
   border: none;
-  color: #64748b;
-  padding: 12px 16px;
+  color: var(--text-muted);
+  padding: 14px 18px;
   text-align: left;
-  font-size: 1rem;
-  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  border-radius: 10px;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .btn-menu:hover {
   background-color: #f1f5f9;
-  color: #0f172a;
+  color: var(--text-main);
 }
 
-/* Botón activo con un toque pastel azulado muy elegante */
+/* Botón activo con un tono pastel azulado elegante y acento */
 .btn-menu.activo {
-  background-color: #e0f2fe; 
+  background-color: var(--pastel-azul);
   color: #0369a1;
   font-weight: 600;
 }
@@ -86,140 +100,162 @@ body {
    CONTENEDOR PRINCIPAL
    ========================================================================== */
 .main-content {
-  margin-left: 260px;
+  margin-left: 280px;
   flex: 1;
-  padding: 30px;
-  max-width: 1200px;
+  padding: 40px;
+  max-width: 1280px;
 }
 
 /* ==========================================================================
-   TARJETAS Y MÉTRICAS (DASHBOARD)
+   TARJETAS Y MÉTRICAS (DASHBOARD) CON TOQUES PASTELES
    ========================================================================== */
 .metricas-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 24px;
   margin-bottom: 30px;
 }
 
 .card-metrica {
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
+  background-color: var(--bg-sidebar);
+  border: 1px solid var(--border-color);
   padding: 24px;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+  border-radius: 16px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.01), 0 2px 4px -1px rgba(0, 0, 0, 0.01);
+  position: relative;
+  overflow: hidden;
 }
 
+/* Detalles estéticos pasteles sutiles en las tarjetas de métricas */
+.card-metrica:nth-child(1) { border-left: 5px solid #38bdf8; background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%); }
+.card-metrica:nth-child(2) { border-left: 5px solid #34d399; background: linear-gradient(135deg, #ffffff 0%, #ecfdf5 100%); }
+.card-metrica:nth-child(3) { border-left: 5px solid #f43f5e; background: linear-gradient(135deg, #ffffff 0%, #fff1f2 100%); }
+
 .card-metrica span {
-  font-size: 0.85rem;
-  color: #64748b;
-  font-weight: 600;
-  letter-spacing: 0.5px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
 }
 
 .card-metrica h2 {
-  font-size: 2rem;
+  font-size: 2.2rem;
   margin-top: 10px;
   color: #0f172a;
+  font-weight: 700;
 }
 
 /* ==========================================================================
    TARJETAS DE FORMULARIOS Y TABLAS
    ========================================================================== */
 .card-formulario, .card-tabla {
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  padding: 30px;
-  border-radius: 12px;
+  background-color: var(--bg-sidebar);
+  border: 1px solid var(--border-color);
+  padding: 32px;
+  border-radius: 16px;
   margin-bottom: 25px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.01);
 }
 
 .card-formulario h3, .card-tabla h3 {
-  font-size: 1.3rem;
-  margin-bottom: 8px;
+  font-size: 1.4rem;
+  margin-bottom: 6px;
   color: #0f172a;
+  font-weight: 600;
 }
 
 .card-formulario p {
-  color: #64748b;
+  color: var(--text-muted);
   font-size: 0.95rem;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 /* ==========================================================================
-   FORMULARIOS Y CAMPOS
+   FORMULARIOS Y CAMPOS (Estética refinada)
    ========================================================================== */
 .form-grupo {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .form-grupo label {
   display: block;
   font-size: 0.85rem;
-  color: #475569;
-  margin-bottom: 6px;
-  font-weight: 500;
+  color: #334155;
+  margin-bottom: 8px;
+  font-weight: 600;
 }
 
 .form-grupo input, .form-grupo select {
   width: 100%;
-  padding: 12px;
+  padding: 14px;
   background-color: #f8fafc;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
   color: #0f172a;
   font-size: 1rem;
   outline: none;
-  transition: border-color 0.2s;
+  transition: all 0.2s;
 }
 
 .form-grupo input:focus, .form-grupo select:focus {
-  border-color: #38bdf8;
+  border-color: var(--accent-blue);
   background-color: #ffffff;
+  box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.1);
 }
 
 .form-fila {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 15px;
+  gap: 20px;
 }
 
-/* Botones con estilo moderno */
+/* Botones con colores pasteles solicitados (Verde, Rosa y Amarillo pastel de acento) */
 .btn-primario {
-  background-color: #0284c7;
-  color: white;
-  border: none;
-  padding: 12px 20px;
-  border-radius: 8px;
+  background-color: #fef08a; /* Amarillo pastel elegante */
+  color: #713f12;
+  border: 1px solid #fde047;
+  padding: 14px 20px;
+  border-radius: 10px;
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
   width: 100%;
   margin-top: 10px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
 }
 
 .btn-primario:hover {
-  background-color: #0369a1;
+  background-color: #fde047;
+  transform: translateY(-1px);
 }
 
 .btn-exito {
-  background-color: #16a34a;
-  color: white;
-  border: none;
-  padding: 12px 20px;
-  border-radius: 8px;
+  background-color: #a7f3d0; /* Verde pastel menta */
+  color: #064e3b;
+  border: 1px solid #6ee7b7;
+  padding: 14px 20px;
+  border-radius: 10px;
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
   width: 100%;
   margin-top: 10px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
 }
 
 .btn-exito:hover {
-  background-color: #15803d;
+  background-color: #6ee7b7;
+  transform: translateY(-1px);
+}
+
+/* Botón alternativo o secundario con tono rosa pastel */
+.btn-rosa-pastel {
+  background-color: #fbcfe8;
+  color: #831843;
+  border: 1px solid #f472b6;
 }
 
 /* ==========================================================================
@@ -228,22 +264,23 @@ body {
 table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 10px;
+  margin-top: 15px;
   text-align: left;
 }
 
 th {
   background-color: #f1f5f9;
   color: #475569;
-  font-size: 0.8rem;
-  padding: 12px;
+  font-size: 0.75rem;
+  padding: 14px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.8px;
+  font-weight: 700;
 }
 
 td {
-  padding: 14px 12px;
-  border-bottom: 1px solid #e2e8f0;
+  padding: 16px 14px;
+  border-bottom: 1px solid var(--border-color);
   color: #334155;
   font-size: 0.95rem;
 }
@@ -254,29 +291,46 @@ tr:hover td {
 
 .empty-state {
   text-align: center;
-  color: #94a3b8;
-  padding: 30px;
+  color: var(--text-muted);
+  padding: 40px;
 }
 
 /* ==========================================================================
-   RESPONSIVO
+   DISEÑO RESPONSIVO REAL PARA CELULARES (Soluciona el error anterior)
    ========================================================================== */
 @media (max-width: 768px) {
-  .sidebar {
-    width: 70px;
-    padding: 15px 10px;
+  body {
+    flex-direction: column;
   }
-  .logo span {
-    display: none; /* Oculta el texto del logo en pantallas chicas si hay imagen */
+  .sidebar {
+    position: relative;
+    width: 100%;
+    height: auto;
+    padding: 15px 20px;
+    box-shadow: none;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+  }
+  .logo {
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+  }
+  .menu-lateral {
+    flex-direction: row;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 5px;
   }
   .btn-menu {
-    font-size: 0;
-    justify-content: center;
-    padding: 12px;
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    background-color: #f1f5f9;
+    flex-shrink: 0;
   }
   .main-content {
-    margin-left: 70px;
-    padding: 15px;
+    margin-left: 0;
+    padding: 20px;
   }
   .form-fila {
     grid-template-columns: 1fr;
