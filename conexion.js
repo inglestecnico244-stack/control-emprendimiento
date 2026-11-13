@@ -8,7 +8,7 @@ MiControl | Autenticación y acceso a datos
 const SUPABASE_URL = 'https://lmqgxqhwujrtglyiiyjr.supabase.co';
 
 // Conservá aquí tu clave pública actual de Supabase.
-const SUPABASE_KEY = 'PEGAR_AQUI_LA_CLAVE_PUBLICA_ACTUAL';
+const SUPABASE_KEY = 'sb_publishable_CePJYdnQu8w-H9G3wjDhJw_RGWryimX';
 
 const URL_REDIRECCION = 'https://inglestecnico244-stack.github.io/control-emprendimiento/';
 
