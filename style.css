@@ -1,0 +1,284 @@
+/* ==========================================================================
+   ESTILOS GENERALES - TEMA CLARO Y TONOS PASTELES
+   ========================================================================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  background-color: #f8fafc; /* Fondo general muy suave */
+  color: #1e293b;            /* Texto principal oscuro para alta legibilidad */
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ==========================================================================
+   BARRA LATERAL (SIDEBAR) CLARA
+   ========================================================================== */
+.sidebar {
+  width: 260px;
+  background-color: #ffffff;
+  border-right: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  position: fixed;
+  height: 100vh;
+  left: 0;
+  top: 0;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.02);
+}
+
+.logo {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #0f172a;
+  margin-bottom: 30px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Estilo por si quieres agregar una imagen de logo después */
+.logo img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.menu-lateral {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.btn-menu {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-menu:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+/* Botón activo con un toque pastel azulado muy elegante */
+.btn-menu.activo {
+  background-color: #e0f2fe; 
+  color: #0369a1;
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   CONTENEDOR PRINCIPAL
+   ========================================================================== */
+.main-content {
+  margin-left: 260px;
+  flex: 1;
+  padding: 30px;
+  max-width: 1200px;
+}
+
+/* ==========================================================================
+   TARJETAS Y MÉTRICAS (DASHBOARD)
+   ========================================================================== */
+.metricas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.card-metrica {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+}
+
+.card-metrica span {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.card-metrica h2 {
+  font-size: 2rem;
+  margin-top: 10px;
+  color: #0f172a;
+}
+
+/* ==========================================================================
+   TARJETAS DE FORMULARIOS Y TABLAS
+   ========================================================================== */
+.card-formulario, .card-tabla {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  padding: 30px;
+  border-radius: 12px;
+  margin-bottom: 25px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+}
+
+.card-formulario h3, .card-tabla h3 {
+  font-size: 1.3rem;
+  margin-bottom: 8px;
+  color: #0f172a;
+}
+
+.card-formulario p {
+  color: #64748b;
+  font-size: 0.95rem;
+  margin-bottom: 20px;
+}
+
+/* ==========================================================================
+   FORMULARIOS Y CAMPOS
+   ========================================================================== */
+.form-grupo {
+  margin-bottom: 16px;
+}
+
+.form-grupo label {
+  display: block;
+  font-size: 0.85rem;
+  color: #475569;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.form-grupo input, .form-grupo select {
+  width: 100%;
+  padding: 12px;
+  background-color: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  color: #0f172a;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.form-grupo input:focus, .form-grupo select:focus {
+  border-color: #38bdf8;
+  background-color: #ffffff;
+}
+
+.form-fila {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+/* Botones con estilo moderno */
+.btn-primario {
+  background-color: #0284c7;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.btn-primario:hover {
+  background-color: #0369a1;
+}
+
+.btn-exito {
+  background-color: #16a34a;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.btn-exito:hover {
+  background-color: #15803d;
+}
+
+/* ==========================================================================
+   TABLA DE INVENTARIO
+   ========================================================================== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  text-align: left;
+}
+
+th {
+  background-color: #f1f5f9;
+  color: #475569;
+  font-size: 0.8rem;
+  padding: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+td {
+  padding: 14px 12px;
+  border-bottom: 1px solid #e2e8f0;
+  color: #334155;
+  font-size: 0.95rem;
+}
+
+tr:hover td {
+  background-color: #f8fafc;
+}
+
+.empty-state {
+  text-align: center;
+  color: #94a3b8;
+  padding: 30px;
+}
+
+/* ==========================================================================
+   RESPONSIVO
+   ========================================================================== */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 70px;
+    padding: 15px 10px;
+  }
+  .logo span {
+    display: none; /* Oculta el texto del logo en pantallas chicas si hay imagen */
+  }
+  .btn-menu {
+    font-size: 0;
+    justify-content: center;
+    padding: 12px;
+  }
+  .main-content {
+    margin-left: 70px;
+    padding: 15px;
+  }
+  .form-fila {
+    grid-template-columns: 1fr;
+  }
+}
