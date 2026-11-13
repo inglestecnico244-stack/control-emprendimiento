@@ -22,10 +22,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   configurarEventosVentas();
   configurarCerrarSesion();
 
-  // Escuchar cambios en la autenticación.
   suscripcionAuth = ConexionDB.escucharCambiosAuth(
     (evento, sesion) => {
-      // Las operaciones se ejecutan después del callback de Supabase Auth.
       Promise.resolve().then(async () => {
 
         if (evento === 'PASSWORD_RECOVERY') {
@@ -48,7 +46,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   );
 
-  // Comprobar si ya existe una sesión.
   try {
     const sesion = await ConexionDB.obtenerSesion();
 
@@ -63,6 +60,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     mostrarPantallaLogin();
   }
 });
+
+
+// ==========================================================================
+// ESTADO DEL SISTEMA
+// ==========================================================================
+
+function actualizarEstadoSistema(estado) {
+  const elemento = document.getElementById('estado-sistema');
+
+  if (!elemento) return;
+
+  elemento.textContent = estado;
+}
 
 
 // ==========================================================================
@@ -174,7 +184,6 @@ function configurarEventosAutenticacion() {
           return;
         }
 
-        // conexion.js devuelve la sesión dentro de resultado.data.
         const sesion = resultado.data?.session;
 
         if (sesion?.user) {
@@ -338,11 +347,15 @@ function procesarSesion(sesion) {
 
   const proceso = (async () => {
     try {
+      actualizarEstadoSistema('Verificando');
+
       console.log('🔐 Usuario autenticado. Buscando emprendimiento...');
 
       const emprendimiento = await ConexionDB.obtenerEmprendimiento();
 
       if (!emprendimiento) {
+        actualizarEstadoSistema('Pendiente de activación');
+
         mostrarPantallaLogin();
 
         mostrarMensajeAuth(
@@ -363,6 +376,7 @@ function procesarSesion(sesion) {
       }
 
       actualizarInterfaz();
+      actualizarEstadoSistema('Conectado');
       mostrarPantallaPrincipal();
 
       console.log('✅ MiControl listo para trabajar.');
@@ -373,6 +387,8 @@ function procesarSesion(sesion) {
       console.error('Error al cargar el emprendimiento:', error);
 
       usuarioActualId = null;
+
+      actualizarEstadoSistema('Error de conexión');
 
       mostrarPantallaLogin();
 
@@ -442,7 +458,6 @@ function configurarCerrarSesion() {
     if (!confirmar) return;
 
     try {
-      // conexion.js devuelve true o false, no un objeto con exito.
       const resultado = await ConexionDB.cerrarSesion();
 
       if (!resultado) {
@@ -477,7 +492,6 @@ function mostrarFormularioNuevaPassword() {
 
   if (document.getElementById('form-nueva-password')) return;
 
-  // Ocultar el formulario original de solicitud de recuperación.
   const formularioAnterior = document.getElementById('form-recuperar');
 
   if (formularioAnterior) {
@@ -555,7 +569,6 @@ function mostrarFormularioNuevaPassword() {
 
       formulario.remove();
 
-      // Cerrar la sesión de recuperación después de cambiar la contraseña.
       const resultadoCierre = await ConexionDB.cerrarSesion();
 
       if (resultadoCierre) {
