@@ -1,3 +1,27 @@
+/* ==========================================================================
+   CONEXION.JS - Capa de Conexión a Supabase
+   ========================================================================== */
+
+const SUPABASE_URL = 'https://lmqgxqhwujrtglyiiyjr.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_CePJYdnQu8w-H9G3wjDhJw_RGWryimX';
+
+let clienteSupabase = null;
+
+if (typeof supabase !== 'undefined' && SUPABASE_URL.includes('https://')) {
+  clienteSupabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  console.log('✅ Supabase conectado correctamente.');
+} else {
+  console.warn('⚠️ Supabase pendiente de credenciales reales.');
+}
+
+const ConexionDB = {
+  async obtenerProductos() {
+    if (!clienteSupabase) return [];
+
+    const { data, error } = await clienteSupabase
+      .from('productos')
+      .select('*')
+      .order('id', { ascending: false });
 
     if (error) {
       console.error('Error al obtener productos de Supabase:', error.message);
@@ -6,10 +30,9 @@
     return data;
   },
 
-  // Insertar un nuevo producto en la tabla 'productos' de Supabase
   async insertarProducto(nuevoProducto) {
     if (!clienteSupabase) {
-      return { exito: false, mensaje: 'Supabase no está conectado. Configura tus credenciales.' };
+      return { exito: false, mensaje: 'Supabase no está conectado.' };
     }
 
     const { data, error } = await clienteSupabase
@@ -25,7 +48,6 @@
     return { exito: true, data: data[0] };
   },
 
-  // Eliminar un producto por ID en Supabase
   async eliminarProducto(id) {
     if (!clienteSupabase) return false;
 
@@ -41,7 +63,6 @@
     return true;
   },
 
-  // Actualizar el stock de un producto después de una venta
   async actualizarStockProducto(id, nuevoStock) {
     if (!clienteSupabase) return false;
 
@@ -57,7 +78,6 @@
     return true;
   },
 
-  // Registrar una venta en la tabla 'ventas'
   async registrarVentaBD(datosVenta) {
     if (!clienteSupabase) return false;
 
@@ -72,7 +92,6 @@
     return true;
   },
 
-  // Obtener la suma total de las ventas del día
   async obtenerVentasHoyTotal() {
     if (!clienteSupabase) return 0;
 
@@ -92,26 +111,3 @@
     return sumaTotal;
   }
 };
-
-// 3. MÉTODOS DE CONEXIÓN CON EL ASISTENTE IA (Vía Edge Functions)
-const ConexionIA = {
-  async consultarAsistente(prompt, contextoNegocio = {}) {
-    try {
-      if (!clienteSupabase) {
-        return '💡 **Asistente:** Conecta Supabase para habilitar las consultas inteligentes en tiempo real.';
-      }
-
-      const { data, error } = await clienteSupabase.functions.invoke('asistente-ia', {
-        body: { prompt, contexto: contextoNegocio }
-      });
-
-      if (error) throw error;
-      return data.respuesta;
-
-    } catch (error) {
-      console.error('Error al conectar con la IA:', error);
-      return 'Ocurrió un error al procesar tu consulta con el asistente.';
-    }
-  }
-};
- 
