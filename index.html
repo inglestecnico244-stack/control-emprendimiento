@@ -758,4 +758,37 @@
   </div>
 
 
-  <!-- ======================================
+  <!-- =====================================================
+       SCRIPTS
+  ====================================================== -->
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script src="conexion.js"></script>
+  <script src="repositorio.js"></script>
+  <script src="app.js"></script>
+
+
+  <!-- FECHA DE LA BARRA SUPERIOR -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const elementoFecha = document.getElementById('header-date');
+
+      if (elementoFecha) {
+        const opciones = {
+          weekday: 'short',
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        };
+
+        elementoFecha.textContent = new Date().toLocaleDateString(
+          'es-AR',
+          opciones
+        );
+      }
+    });
+  </script>
+
+</body>
+</html>
