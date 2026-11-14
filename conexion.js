@@ -33,7 +33,10 @@ const ConexionDB = {
 
   async registrarUsuario(datosUsuario) {
     if (!clienteSupabase) {
-      return { exito: false, mensaje: 'No hay conexión con Supabase.' };
+      return {
+        exito: false,
+        mensaje: 'No hay conexión con Supabase.'
+      };
     }
 
     const { data, error } = await clienteSupabase.auth.signUp({
@@ -51,7 +54,11 @@ const ConexionDB = {
 
     if (error) {
       console.error('Error en el registro:', error.message);
-      return { exito: false, mensaje: error.message };
+
+      return {
+        exito: false,
+        mensaje: error.message
+      };
     }
 
     return {
@@ -63,7 +70,10 @@ const ConexionDB = {
 
   async iniciarSesion(email, password) {
     if (!clienteSupabase) {
-      return { exito: false, mensaje: 'No hay conexión con Supabase.' };
+      return {
+        exito: false,
+        mensaje: 'No hay conexión con Supabase.'
+      };
     }
 
     const { data, error } = await clienteSupabase.auth.signInWithPassword({
@@ -73,10 +83,17 @@ const ConexionDB = {
 
     if (error) {
       console.error('Error al iniciar sesión:', error.message);
-      return { exito: false, mensaje: error.message };
+
+      return {
+        exito: false,
+        mensaje: error.message
+      };
     }
 
-    return { exito: true, data };
+    return {
+      exito: true,
+      data
+    };
   },
 
   async cerrarSesion() {
@@ -131,7 +148,10 @@ const ConexionDB = {
 
   async recuperarPassword(email) {
     if (!clienteSupabase) {
-      return { exito: false, mensaje: 'No hay conexión con Supabase.' };
+      return {
+        exito: false,
+        mensaje: 'No hay conexión con Supabase.'
+      };
     }
 
     const { error } = await clienteSupabase.auth.resetPasswordForEmail(
@@ -141,7 +161,11 @@ const ConexionDB = {
 
     if (error) {
       console.error('Error al solicitar recuperación:', error.message);
-      return { exito: false, mensaje: error.message };
+
+      return {
+        exito: false,
+        mensaje: error.message
+      };
     }
 
     return {
@@ -152,7 +176,10 @@ const ConexionDB = {
 
   async actualizarPassword(nuevaPassword) {
     if (!clienteSupabase) {
-      return { exito: false, mensaje: 'No hay conexión con Supabase.' };
+      return {
+        exito: false,
+        mensaje: 'No hay conexión con Supabase.'
+      };
     }
 
     const { error } = await clienteSupabase.auth.updateUser({
@@ -161,7 +188,11 @@ const ConexionDB = {
 
     if (error) {
       console.error('Error al actualizar contraseña:', error.message);
-      return { exito: false, mensaje: error.message };
+
+      return {
+        exito: false,
+        mensaje: error.message
+      };
     }
 
     return {
@@ -229,10 +260,20 @@ const ConexionDB = {
       };
     }
 
+    const usuario = await this.obtenerUsuario();
+
+    if (!usuario) {
+      return {
+        exito: false,
+        mensaje: 'No hay una sesión activa.'
+      };
+    }
+
     const { data, error } = await clienteSupabase
       .from('emprendimientos')
       .update({ nombre })
       .eq('id', emprendimientoActual.id)
+      .eq('propietario_id', usuario.id)
       .select('*')
       .single();
 
@@ -294,10 +335,17 @@ const ConexionDB = {
 
     if (error) {
       console.error('Error al guardar producto:', error.message);
-      return { exito: false, mensaje: error.message };
+
+      return {
+        exito: false,
+        mensaje: error.message
+      };
     }
 
-    return { exito: true, data };
+    return {
+      exito: true,
+      data
+    };
   },
 
   async eliminarProducto(id) {
@@ -366,6 +414,7 @@ const ConexionDB = {
 
     if (error) {
       console.error('Error al registrar venta:', error.message);
+
       return {
         exito: false,
         mensaje: error.message || 'No se pudo registrar la venta.'
@@ -387,7 +436,10 @@ const ConexionDB = {
       };
     }
 
-    return { exito: true, data };
+    return {
+      exito: true,
+      data
+    };
   },
 
   async registrarVentaBD(datosVenta) {
@@ -410,7 +462,7 @@ const ConexionDB = {
     return true;
   },
 
-  /* CONSULTAR HISTORIAL DE VENTAS ENTRE DOS FECHAS */
+  /* 6. CONSULTAR HISTORIAL DE VENTAS ENTRE DOS FECHAS */
 
   async obtenerVentasPeriodo(desde, hasta) {
     if (!clienteSupabase || !emprendimientoActual) {
@@ -422,7 +474,10 @@ const ConexionDB = {
     }
 
     const esFechaValida = (valor) => {
-      if (typeof valor !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(valor)) {
+      if (
+        typeof valor !== 'string' ||
+        !/^\d{4}-\d{2}-\d{2}$/.test(valor)
+      ) {
         return false;
       }
 
@@ -436,7 +491,11 @@ const ConexionDB = {
       );
     };
 
-    if (!esFechaValida(desde) || !esFechaValida(hasta) || desde > hasta) {
+    if (
+      !esFechaValida(desde) ||
+      !esFechaValida(hasta) ||
+      desde > hasta
+    ) {
       return {
         exito: false,
         mensaje: 'El período seleccionado no es válido.',
@@ -444,9 +503,11 @@ const ConexionDB = {
       };
     }
 
-    // Calcula el día posterior al final del período sin conversiones horarias.
     const [anio, mes, dia] = hasta.split('-').map(Number);
-    const diaPosterior = new Date(Date.UTC(anio, mes - 1, dia + 1));
+
+    const diaPosterior = new Date(
+      Date.UTC(anio, mes - 1, dia + 1)
+    );
 
     const hastaExclusivo = [
       diaPosterior.getUTCFullYear(),
@@ -478,7 +539,13 @@ const ConexionDB = {
     };
   },
 
-  /* OBTENER TOTAL DE VENTAS DEL DÍA */
+  /* ALIAS PARA CONSULTAR REPORTES */
+
+  async obtenerReporteVentas(desde, hasta) {
+    return await this.obtenerVentasPeriodo(desde, hasta);
+  },
+
+  /* 7. OBTENER TOTAL DE VENTAS DEL DÍA */
 
   async obtenerVentasHoyTotal() {
     if (!clienteSupabase || !emprendimientoActual) return 0;
