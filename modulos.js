@@ -26,6 +26,7 @@ ConexionDB.obtenerVentasHoyTotal = async function () {
     .from('ventas')
     .select('total_venta')
     .eq('emprendimiento_id', emp.id)
+    .eq('anulada', false)
     .gte('fecha', new Date(h.getFullYear(), h.getMonth(), h.getDate()).toISOString())
     .lt('fecha', new Date(h.getFullYear(), h.getMonth(), h.getDate() + 1).toISOString());
 
@@ -50,7 +51,7 @@ ConexionDB.obtenerVentasPeriodo = async function (desde, hasta) {
 
   const { data, error } = await clienteSupabase
     .from('ventas')
-    .select('id, producto_id, nombre_producto, cantidad, total_venta, fecha, forma_pago, precio_unitario, costo_unitario, descuento_porcentaje, observaciones')
+    .select('id, producto_id, nombre_producto, cantidad, total_venta, fecha, forma_pago, precio_unitario, costo_unitario, descuento_porcentaje, observaciones, anulada, motivo_anulacion')
     .eq('emprendimiento_id', emp.id)
     .gte('fecha', new Date(a1, m1 - 1, d1).toISOString())
     .lt('fecha', new Date(a2, m2 - 1, d2 + 1).toISOString())
@@ -87,7 +88,8 @@ async function cargarReporte() {
     return;
   }
 
-  const ventas = r.data;
+  const todas = r.data;
+  const ventas = todas.filter(v => !v.anulada); // solo las activas suman
 
   el('reporte-total-ventas').textContent =
     formatoMoneda(ventas.reduce((t, v) => t + Number(v.total_venta), 0));
@@ -129,10 +131,10 @@ async function cargarReporte() {
   const tbody = el('tabla-historial-ventas');
   tbody.replaceChildren();
 
-  if (!ventas.length) {
+  if (!todas.length) {
     const tr = document.createElement('tr');
     const td = document.createElement('td');
-    td.colSpan = 5;
+    td.colSpan = 6;
     td.className = 'empty-state';
     td.textContent = 'No hay ventas en el período seleccionado.';
     tr.appendChild(td);
@@ -140,7 +142,7 @@ async function cargarReporte() {
     return;
   }
 
-  ventas.forEach(v => {
+  todas.forEach(v => {
     const tr = document.createElement('tr');
     [
       fechaVenta(v.fecha),
@@ -153,6 +155,21 @@ async function cargarReporte() {
       td.textContent = texto;
       tr.appendChild(td);
     });
+
+    const celdaAccion = document.createElement('td');
+    if (v.anulada) {
+      tr.style.opacity = '0.55';
+      celdaAccion.textContent = 'Anulada';
+      celdaAccion.title = v.motivo_anulacion || '';
+    } else {
+      const boton = document.createElement('button');
+      boton.type = 'button';
+      boton.textContent = 'Anular';
+      boton.addEventListener('click', () => anularVenta(v));
+      celdaAccion.appendChild(boton);
+    }
+    tr.appendChild(celdaAccion);
+
     tbody.appendChild(tr);
   });
 }
@@ -402,9 +419,62 @@ function agregarCamposReporte() {
   const th = document.createElement('th');
   th.textContent = 'FORMA DE PAGO';
   encabezado.appendChild(th);
+
+  const thEstado = document.createElement('th');
+  thEstado.textContent = 'ESTADO';
+  encabezado.appendChild(thEstado);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
   agregarCamposVenta();
   agregarCamposReporte();
 });
+
+
+/* 8. ANULAR VENTAS
+   Devuelve el stock y marca la venta como anulada (no se borra).
+   Requiere la función anular_venta de Supabase. */
+
+let anulandoVenta = false;
+
+async function anularVenta(venta) {
+  if (anulandoVenta) return;
+
+  const motivo = prompt(
+    `¿Anular la venta de ${venta.nombre_producto} por ${formatoMoneda(venta.total_venta)}?\n` +
+    `Se devolverán ${venta.cantidad} unidad(es) al stock.\n\nMotivo (opcional):`
+  );
+  if (motivo === null) return; // canceló
+
+  anulandoVenta = true;
+
+  try {
+    const { data, error } = await clienteSupabase.rpc('anular_venta', {
+      p_venta_id: Number(venta.id),
+      p_motivo: motivo.trim()
+    });
+
+    if (error) {
+      console.error('Error al anular venta:', error.message);
+      alert(`❌ ${error.message || 'No se pudo anular la venta.'}`);
+      return;
+    }
+
+    // Refrescar stock, ingresos de hoy y reporte.
+    RepositorioNegocio.productos = await ConexionDB.obtenerProductos();
+    await RepositorioNegocio.calcularVentasHoy();
+    actualizarInterfaz();
+    await cargarReporte();
+
+    alert(
+      data?.stock_devuelto
+        ? '✅ Venta anulada y stock devuelto.'
+        : '✅ Venta anulada. El producto ya no existe, por eso no se devolvió stock.'
+    );
+  } catch (error) {
+    console.error('Error al anular venta:', error);
+    alert('❌ Ocurrió un error al anular la venta.');
+  } finally {
+    anulandoVenta = false;
+  }
+}
