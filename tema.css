@@ -1,0 +1,129 @@
+/* ==========================================================================
+   TEMA.CSS — Paleta profesional para MiControl
+   Se carga DESPUÉS de style.css y solo cambia colores.
+   Para volver al diseño anterior: borrá la línea <link> de tema.css en index.html.
+   ========================================================================== */
+
+:root {
+  --primary: #1e3a8a;
+  --primary-dark: #172554;
+  --primary-light: #eff6ff;
+  --primary-border: #bfdbfe;
+
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --text-light: #94a3b8;
+
+  --bg-canvas: #f1f5f9;
+  --bg-soft: #e8eef6;
+  --border-subtle: #e2e8f0;
+  --border-card: #eef2f7;
+
+  --success: #047857;
+  --success-bg: #ecfdf5;
+  --success-border: #a7f3d0;
+
+  --danger: #b91c1c;
+  --danger-bg: #fef2f2;
+  --danger-border: #fecaca;
+
+  --warning: #b45309;
+  --warning-bg: #fffbeb;
+  --warning-border: #fde68a;
+
+  --info: #1d4ed8;
+  --info-bg: #eff6ff;
+  --info-border: #bfdbfe;
+
+  --shadow-card: 0 6px 20px rgba(15, 23, 42, 0.07);
+  --shadow-soft: 0 1px 4px rgba(15, 23, 42, 0.05);
+  --shadow-focus: 0 0 0 3px rgba(37, 99, 235, 0.18);
+}
+
+/* Logo */
+.brand-icon {
+  background: linear-gradient(135deg, #2563eb, #1e3a8a);
+  box-shadow: 0 4px 12px rgba(30, 58, 138, 0.25);
+}
+
+/* Barra lateral oscura */
+.sidebar {
+  background: #0b1f3a;
+  border-right: none;
+  box-shadow: none;
+}
+.sidebar-brand { border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+.brand-text h2 { color: #ffffff; }
+.brand-text span,
+.menu-label { color: #7f93b0; }
+
+.btn-menu { color: #c3cfe0; }
+.btn-menu:hover { background: rgba(255, 255, 255, 0.07); color: #ffffff; }
+.btn-menu.activo {
+  background: rgba(96, 165, 250, 0.16);
+  color: #ffffff;
+  box-shadow: inset 3px 0 0 #60a5fa;
+}
+
+.sidebar-footer {
+  background: rgba(0, 0, 0, 0.18);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.avatar-circle { background: #1e3a66; color: #ffffff; }
+.user-info strong { color: #ffffff; }
+.user-info span { color: #93a5c0; }
+
+/* Botón cerrar sesión (antes no tenía estilo) */
+#btn-cerrar-sesion {
+  width: 100%;
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: #c3cfe0;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+#btn-cerrar-sesion:hover {
+  background: rgba(220, 38, 38, 0.18);
+  border-color: rgba(248, 113, 113, 0.55);
+  color: #fecaca;
+}
+
+/* Tarjetas de métricas: fondo blanco y franja de color arriba */
+.kpi-blue, .kpi-sage, .kpi-rose, .kpi-lavender {
+  background: var(--bg-surface);
+  border-top: 3px solid;
+}
+.kpi-blue { border-top-color: #2563eb; }
+.kpi-sage { border-top-color: #059669; }
+.kpi-rose { border-top-color: #dc2626; }
+.kpi-lavender { border-top-color: #7c3aed; }
+
+.accent-panel { background: linear-gradient(145deg, #ffffff 50%, #eff6ff 100%); border-color: var(--border-subtle); }
+th { background: #f8fafc; }
+.btn-exito:hover { background: #065f46; }
+
+/* Pantalla de acceso */
+#auth-screen {
+  background:
+    radial-gradient(circle at 15% 15%, rgba(37, 99, 235, 0.10), transparent 32%),
+    radial-gradient(circle at 85% 85%, rgba(5, 150, 105, 0.07), transparent 30%),
+    var(--bg-canvas);
+}
+
+/* Celulares: el menú queda arriba y también es oscuro */
+@media (max-width: 768px) {
+  .sidebar-brand { border-bottom: none; }
+  .btn-menu { background: rgba(255, 255, 255, 0.07); }
+  .btn-menu.activo {
+    background: rgba(96, 165, 250, 0.2);
+    box-shadow: inset 0 -3px 0 #60a5fa;
+  }
+  #btn-cerrar-sesion { margin-top: 0; }
+}
