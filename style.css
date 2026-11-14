@@ -1348,3 +1348,8 @@ font-size: 1.8rem;
     text-align: center;
   }
 }
+
+@media (max-width: 768px) {
+  .sidebar-footer { display: block; padding: 10px 12px; }
+  .user-mini-card { display: none; }
+}
