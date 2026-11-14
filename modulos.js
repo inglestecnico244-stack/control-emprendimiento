@@ -813,3 +813,49 @@ function actualizarAlertasStock() {
 
   panel.appendChild(caja);
 }
+
+
+/* 12. LOGO DE MICONTROL
+   Usa logo.jpg (pantalla de acceso) e icono.png (barra lateral y pestaña).
+   Ambos archivos tienen que estar en la misma carpeta que index.html. */
+
+function aplicarLogo() {
+  const estilo = document.createElement('style');
+  estilo.textContent = `
+    .auth-logo{display:block;width:100%;max-width:340px;height:auto;border-radius:20px;box-shadow:0 12px 30px rgba(11,31,58,.28)}
+    .sidebar-logo{width:44px;height:44px;flex-shrink:0;border-radius:11px;box-shadow:0 4px 12px rgba(0,0,0,.35)}
+    @media (max-width:768px){.sidebar-logo{width:36px;height:36px}}`;
+  document.head.appendChild(estilo);
+
+  // Pantalla de acceso: el logo completo reemplaza al bloque "M + texto".
+  const marcaAcceso = document.querySelector('.auth-brand');
+  if (marcaAcceso) {
+    const logo = document.createElement('img');
+    logo.src = 'logo.jpg';
+    logo.alt = 'MiControl: Gestioná, organizá, crecé';
+    logo.className = 'auth-logo';
+    marcaAcceso.replaceChildren(logo);
+  }
+
+  // Barra lateral: el ícono reemplaza al cuadrado con la "M".
+  const iconoLateral = document.querySelector('.sidebar-brand .brand-icon');
+  if (iconoLateral) {
+    const icono = document.createElement('img');
+    icono.src = 'icono.png';
+    icono.alt = 'MiControl';
+    icono.className = 'sidebar-logo';
+    iconoLateral.replaceWith(icono);
+  }
+
+  // Ícono de la pestaña del navegador.
+  let favicon = document.querySelector('link[rel="icon"]');
+  if (!favicon) {
+    favicon = document.createElement('link');
+    favicon.rel = 'icon';
+    document.head.appendChild(favicon);
+  }
+  favicon.type = 'image/png';
+  favicon.href = 'icono.png';
+}
+
+document.addEventListener('DOMContentLoaded', aplicarLogo);
