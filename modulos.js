@@ -50,7 +50,7 @@ ConexionDB.obtenerVentasPeriodo = async function (desde, hasta) {
 
   const { data, error } = await clienteSupabase
     .from('ventas')
-    .select('id, producto_id, nombre_producto, cantidad, total_venta, fecha')
+    .select('id, producto_id, nombre_producto, cantidad, total_venta, fecha, forma_pago, precio_unitario, costo_unitario, descuento_porcentaje, observaciones')
     .eq('emprendimiento_id', emp.id)
     .gte('fecha', new Date(a1, m1 - 1, d1).toISOString())
     .lt('fecha', new Date(a2, m2 - 1, d2 + 1).toISOString())
@@ -95,13 +95,44 @@ async function cargarReporte() {
   el('reporte-unidades').textContent =
     ventas.reduce((t, v) => t + Number(v.cantidad), 0);
 
+  // Ganancia: solo ventas que guardaron el costo (las anteriores no lo tienen).
+  const conCosto = ventas.filter(v => v.costo_unitario !== null && v.costo_unitario !== undefined);
+  el('reporte-ganancia').textContent = formatoMoneda(
+    conCosto.reduce((t, v) => t + Number(v.total_venta) - Number(v.costo_unitario) * Number(v.cantidad), 0)
+  );
+
+  // Total por forma de pago.
+  const porPago = {};
+  ventas.forEach(v => {
+    const clave = nombrePago(v.forma_pago);
+    porPago[clave] = (porPago[clave] || 0) + Number(v.total_venta);
+  });
+
+  const caja = el('reporte-por-pago');
+  caja.replaceChildren();
+
+  if (!Object.keys(porPago).length) {
+    caja.textContent = 'No hay ventas en el período seleccionado.';
+  }
+
+  Object.entries(porPago).forEach(([nombre, total]) => {
+    const fila = document.createElement('div');
+    fila.className = 'stat-row';
+    const etiqueta = document.createElement('span');
+    etiqueta.textContent = nombre;
+    const importe = document.createElement('strong');
+    importe.textContent = formatoMoneda(total);
+    fila.append(etiqueta, importe);
+    caja.appendChild(fila);
+  });
+
   const tbody = el('tabla-historial-ventas');
   tbody.replaceChildren();
 
   if (!ventas.length) {
     const tr = document.createElement('tr');
     const td = document.createElement('td');
-    td.colSpan = 4;
+    td.colSpan = 5;
     td.className = 'empty-state';
     td.textContent = 'No hay ventas en el período seleccionado.';
     tr.appendChild(td);
@@ -115,7 +146,8 @@ async function cargarReporte() {
       fechaVenta(v.fecha),
       v.nombre_producto,
       v.cantidad,
-      formatoMoneda(v.total_venta)
+      formatoMoneda(v.total_venta),
+      nombrePago(v.forma_pago)
     ].forEach(texto => {
       const td = document.createElement('td');
       td.textContent = texto;
@@ -246,4 +278,133 @@ document.addEventListener('DOMContentLoaded', () => {
       tr.hidden = !!q && !tr.textContent.toLowerCase().includes(q);
     });
   });
+});
+
+
+/* 6. VENTAS: FORMA DE PAGO, DESCUENTO Y OBSERVACIONES
+   Requiere haber creado las columnas nuevas y la función registrar_venta
+   de 5 parámetros en Supabase (script SQL). */
+
+const FORMAS_PAGO = {
+  efectivo: 'Efectivo',
+  transferencia: 'Transferencia',
+  debito: 'Débito',
+  credito: 'Crédito',
+  mercado_pago: 'Mercado Pago'
+};
+
+const nombrePago = clave => FORMAS_PAGO[clave] || 'Sin especificar';
+
+// Reemplaza a la versión de conexion.js: envía los datos nuevos a Supabase.
+ConexionDB.registrarVentaAtomica = async function (datosVenta) {
+  if (!clienteSupabase || !this.obtenerEmprendimientoActual()) {
+    return { exito: false, mensaje: 'No hay un emprendimiento activo.' };
+  }
+
+  const { data, error } = await clienteSupabase.rpc('registrar_venta', {
+    p_producto_id: Number(datosVenta.producto_id),
+    p_cantidad: Number(datosVenta.cantidad),
+    p_forma_pago: el('venta-forma-pago').value,
+    p_descuento_porcentaje: Number(el('venta-descuento').value) || 0,
+    p_observaciones: el('venta-observaciones').value.trim()
+  });
+
+  if (error) {
+    console.error('Error al registrar venta:', error.message);
+    return { exito: false, mensaje: error.message || 'No se pudo registrar la venta.' };
+  }
+
+  if (!data || data.stock_restante === undefined) {
+    return { exito: false, mensaje: 'Supabase devolvió una respuesta inesperada al registrar la venta.' };
+  }
+
+  return { exito: true, data };
+};
+
+// Agrega los campos nuevos al formulario de ventas (sin tocar el index.html).
+function agregarCamposVenta() {
+  const form = el('form-venta');
+  if (!form || el('venta-forma-pago')) return;
+
+  const opciones = Object.entries(FORMAS_PAGO)
+    .map(([clave, nombre]) => `<option value="${clave}">${nombre}</option>`)
+    .join('');
+
+  const bloque = document.createElement('div');
+  bloque.innerHTML = `
+    <div class="form-fila">
+      <div class="form-grupo">
+        <label for="venta-forma-pago">Forma de pago</label>
+        <select id="venta-forma-pago" required>
+          <option value="">Seleccionar</option>
+          ${opciones}
+        </select>
+      </div>
+      <div class="form-grupo">
+        <label for="venta-descuento">Descuento (%)</label>
+        <input type="number" id="venta-descuento" value="0" min="0" max="100" step="0.01">
+      </div>
+    </div>
+    <div class="form-grupo">
+      <label for="venta-observaciones">Observaciones (opcional)</label>
+      <input type="text" id="venta-observaciones" maxlength="300" placeholder="Ej: entrega a domicilio">
+    </div>
+    <div class="quick-stats-box" style="margin-bottom:18px;">
+      <div class="stat-row"><span>Total a cobrar</span><strong id="venta-total-previo">$0,00</strong></div>
+    </div>`;
+
+  form.querySelector('[type="submit"]').before(bloque);
+
+  const actualizarTotal = () => {
+    const producto = RepositorioNegocio.productos.find(
+      p => String(p.id) === el('venta-producto-id').value
+    );
+    const cantidad = Number(el('venta-cantidad').value) || 0;
+    const descuento = Math.min(Math.max(Number(el('venta-descuento').value) || 0, 0), 100);
+
+    el('venta-total-previo').textContent = formatoMoneda(
+      producto ? Number(producto.precio_venta) * cantidad * (1 - descuento / 100) : 0
+    );
+  };
+
+  ['venta-producto-id', 'venta-cantidad', 'venta-descuento'].forEach(id => {
+    ['input', 'change'].forEach(evento => el(id).addEventListener(evento, actualizarTotal));
+  });
+  form.addEventListener('reset', () => setTimeout(actualizarTotal));
+}
+
+
+/* 7. REPORTES: GANANCIA Y TOTAL POR FORMA DE PAGO */
+
+function agregarCamposReporte() {
+  const vista = el('vista-reportes');
+  if (!vista || el('reporte-ganancia')) return;
+
+  const grilla = vista.querySelector('.metricas-grid');
+
+  const tarjeta = document.createElement('div');
+  tarjeta.className = 'card-metrica kpi-sage';
+  tarjeta.innerHTML = `
+    <div class="kpi-header"><span>Ganancia estimada</span></div>
+    <h2 id="reporte-ganancia">$0,00</h2>
+    <div class="kpi-footer"><span>Ventas con costo registrado</span></div>`;
+  grilla.appendChild(tarjeta);
+
+  const panel = document.createElement('div');
+  panel.className = 'card-panel';
+  panel.style.marginBottom = '26px';
+  panel.innerHTML = `
+    <div class="table-header-flex"><h3>Ventas por forma de pago</h3></div>
+    <div class="quick-stats-box" id="reporte-por-pago"></div>`;
+  grilla.after(panel);
+
+  const encabezado = el('tabla-historial-ventas').closest('table').querySelector('thead tr');
+  const th = document.createElement('th');
+  th.textContent = 'FORMA DE PAGO';
+  encabezado.appendChild(th);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  agregarCamposVenta();
+  agregarCamposReporte();
 });
