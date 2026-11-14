@@ -134,7 +134,7 @@ async function cargarReporte() {
   if (!todas.length) {
     const tr = document.createElement('tr');
     const td = document.createElement('td');
-    td.colSpan = 6;
+    td.colSpan = 7;
     td.className = 'empty-state';
     td.textContent = 'No hay ventas en el período seleccionado.';
     tr.appendChild(td);
@@ -169,6 +169,16 @@ async function cargarReporte() {
       celdaAccion.appendChild(boton);
     }
     tr.appendChild(celdaAccion);
+
+    const celdaComprobante = document.createElement('td');
+    const botonComprobante = document.createElement('button');
+    botonComprobante.type = 'button';
+    botonComprobante.textContent = 'Ver comprobante';
+    botonComprobante.style.cssText =
+      'background:var(--primary-light);color:var(--primary);border-color:var(--primary-border);';
+    botonComprobante.addEventListener('click', () => abrirComprobante(v));
+    celdaComprobante.appendChild(botonComprobante);
+    tr.appendChild(celdaComprobante);
 
     tbody.appendChild(tr);
   });
@@ -423,6 +433,10 @@ function agregarCamposReporte() {
   const thEstado = document.createElement('th');
   thEstado.textContent = 'ESTADO';
   encabezado.appendChild(thEstado);
+
+  const thComprobante = document.createElement('th');
+  thComprobante.textContent = 'COMPROBANTE';
+  encabezado.appendChild(thComprobante);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -477,4 +491,95 @@ async function anularVenta(venta) {
   } finally {
     anulandoVenta = false;
   }
+}
+
+
+/* 9. COMPROBANTE DE VENTA (no fiscal)
+   Se abre en una pestaña nueva para imprimir, guardar como PDF o
+   mandar por WhatsApp. Lleva la leyenda "Documento no válido como factura". */
+
+const esc = texto =>
+  String(texto ?? '').replace(/[&<>"']/g, c => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
+
+function abrirComprobante(v) {
+  const negocio = ConexionDB.obtenerEmprendimientoActual()?.nombre || 'Mi negocio';
+  const cantidad = Number(v.cantidad);
+  const total = Number(v.total_venta);
+
+  // Las ventas anteriores no guardaron el precio unitario: se deduce del total.
+  const unitario = v.precio_unitario !== null && v.precio_unitario !== undefined
+    ? Number(v.precio_unitario)
+    : total / cantidad;
+
+  const subtotal = unitario * cantidad;
+  const descuento = Math.max(subtotal - total, 0);
+  const hayDescuento = descuento > 0.005;
+  const porcentaje = Number(v.descuento_porcentaje) > 0 ? ` (${Number(v.descuento_porcentaje)}%)` : '';
+  const numero = String(v.id).padStart(8, '0');
+  const fecha = fechaVenta(v.fecha);
+
+  const textoWhatsApp = [
+    `*${negocio}*`,
+    `Comprobante N° ${numero}`,
+    fecha,
+    '',
+    `${cantidad} x ${v.nombre_producto}`,
+    ...(hayDescuento ? [`Descuento${porcentaje}: -${formatoMoneda(descuento)}`] : []),
+    `Total: ${formatoMoneda(total)}`,
+    `Pago: ${nombrePago(v.forma_pago)}`,
+    '',
+    'Documento no válido como factura.'
+  ].join('\n');
+
+  const html = `<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Comprobante N° ${numero}</title>
+<style>
+  body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#f1f5f9;margin:0;padding:24px;color:#0f172a}
+  .hoja{max-width:420px;margin:0 auto;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:28px}
+  h1{font-size:1.25rem;margin:0;color:#0b1f3a;text-align:center}
+  .tipo{text-align:center;color:#64748b;font-size:.78rem;letter-spacing:1px;margin:6px 0 18px}
+  .fila{display:flex;justify-content:space-between;gap:12px;padding:6px 0;font-size:.92rem}
+  .fila span:last-child{text-align:right}
+  .linea{border-top:1px dashed #cbd5e1;margin:12px 0}
+  .total{font-size:1.2rem;font-weight:700;color:#0b1f3a}
+  .anulada{background:#fef2f2;color:#b91c1c;text-align:center;font-weight:700;padding:8px;border-radius:8px;margin-bottom:14px}
+  .pie{text-align:center;color:#64748b;font-size:.75rem;margin-top:18px}
+  .acciones{max-width:420px;margin:16px auto 0;display:flex;gap:10px}
+  .acciones a,.acciones button{flex:1;text-align:center;padding:12px;border-radius:9px;border:0;font:inherit;font-weight:600;cursor:pointer;text-decoration:none;color:#fff}
+  .imprimir{background:#1e3a8a}.whatsapp{background:#059669}
+  @media print{body{background:#fff;padding:0}.hoja{border:0}.acciones{display:none}}
+</style></head><body>
+<div class="hoja">
+  <h1>${esc(negocio)}</h1>
+  <div class="tipo">COMPROBANTE DE VENTA · N° ${numero}</div>
+  ${v.anulada ? '<div class="anulada">VENTA ANULADA</div>' : ''}
+  <div class="fila"><span>Fecha</span><span>${esc(fecha)}</span></div>
+  <div class="linea"></div>
+  <div class="fila"><span>${esc(cantidad)} × ${esc(v.nombre_producto)}</span><span>${formatoMoneda(subtotal)}</span></div>
+  <div class="fila"><span>Precio unitario</span><span>${formatoMoneda(unitario)}</span></div>
+  ${hayDescuento ? `<div class="fila"><span>Descuento${esc(porcentaje)}</span><span>-${formatoMoneda(descuento)}</span></div>` : ''}
+  <div class="linea"></div>
+  <div class="fila total"><span>TOTAL</span><span>${formatoMoneda(total)}</span></div>
+  <div class="fila"><span>Forma de pago</span><span>${esc(nombrePago(v.forma_pago))}</span></div>
+  ${v.observaciones ? `<div class="fila"><span>Observaciones</span><span>${esc(v.observaciones)}</span></div>` : ''}
+  <div class="pie">Documento no válido como factura</div>
+</div>
+<div class="acciones">
+  <button class="imprimir" onclick="window.print()">Imprimir / PDF</button>
+  <a class="whatsapp" href="https://wa.me/?text=${encodeURIComponent(textoWhatsApp)}" target="_blank" rel="noopener">WhatsApp</a>
+</div>
+</body></html>`;
+
+  const url = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
+  const ventana = window.open(url, '_blank');
+
+  if (!ventana) {
+    alert('Tu navegador bloqueó la ventana. Permití las ventanas emergentes para este sitio e intentá de nuevo.');
+  }
+
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
 }
