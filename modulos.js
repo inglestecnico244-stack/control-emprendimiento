@@ -66,6 +66,16 @@ ConexionDB.obtenerVentasPeriodo = async function (desde, hasta) {
 
 /* 2. REPORTES */
 
+// Si la fecha llega sin zona horaria, la base la guardó en UTC: se agrega "Z"
+// para que el navegador la convierta bien a la hora local.
+function fechaVenta(valor) {
+  const texto = /[zZ]$|[+-]\d{2}(:?\d{2})?$/.test(valor) ? valor : `${valor}Z`;
+  return new Date(texto).toLocaleString('es-AR', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  });
+}
+
 async function cargarReporte() {
   const r = await ConexionDB.obtenerVentasPeriodo(
     el('reporte-desde').value,
@@ -102,7 +112,7 @@ async function cargarReporte() {
   ventas.forEach(v => {
     const tr = document.createElement('tr');
     [
-      new Date(v.fecha).toLocaleString('es-AR'),
+      fechaVenta(v.fecha),
       v.nombre_producto,
       v.cantidad,
       formatoMoneda(v.total_venta)
