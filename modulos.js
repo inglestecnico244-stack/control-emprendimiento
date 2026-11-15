@@ -94,7 +94,7 @@ async function cargarReporte() {
 
   el('reporte-total-ventas').textContent =
     formatoMoneda(ventas.reduce((t, v) => t + Number(v.total_venta), 0));
-  el('reporte-cantidad-ventas').textContent = ventas.length;
+  el('reporte-cantidad-ventas').textContent = agruparVentas(ventas).length;
   el('reporte-unidades').textContent =
     ventas.reduce((t, v) => t + Number(v.cantidad), 0);
 
@@ -145,7 +145,7 @@ async function cargarReporte() {
     return;
   }
 
-  todas.forEach(v => {
+  agruparVentas(todas).forEach(v => {
     const tr = document.createElement('tr');
     [
       fechaVenta(v.fecha),
@@ -203,6 +203,7 @@ function actualizarModulosExtra() {
 
   actualizarAlertasStock();
   agregarBotonesEditar();
+  dibujarCarrito();
 }
 
 // Se ejecuta cada vez que app.js refresca la interfaz.
@@ -354,10 +355,28 @@ ConexionDB.registrarVentaAtomica = async function (datosVenta) {
   return { exito: true, data };
 };
 
-// Agrega los campos nuevos al formulario de ventas (sin tocar el index.html).
+// Convierte el formulario de ventas en un carrito con varios productos y agrega
+// forma de pago, descuento y observaciones (sin tocar el index.html).
 function agregarCamposVenta() {
   const form = el('form-venta');
   if (!form || el('venta-forma-pago')) return;
+
+  // La validación del producto y la cantidad pasa a hacerla el carrito.
+  el('venta-producto-id').removeAttribute('required');
+  el('venta-cantidad').removeAttribute('required');
+
+  const agregar = document.createElement('button');
+  agregar.type = 'button';
+  agregar.className = 'btn-action-secondary';
+  agregar.textContent = '＋ Agregar al carrito';
+  agregar.style.cssText = 'width:100%;margin-bottom:18px;';
+  agregar.addEventListener('click', agregarAlCarrito);
+
+  const caja = document.createElement('div');
+  caja.id = 'venta-carrito';
+  caja.style.marginBottom = '18px';
+
+  el('venta-cantidad').closest('.form-grupo').after(agregar, caja);
 
   const opciones = Object.entries(FORMAS_PAGO)
     .map(([clave, nombre]) => `<option value="${clave}">${nombre}</option>`)
@@ -388,22 +407,18 @@ function agregarCamposVenta() {
 
   form.querySelector('[type="submit"]').before(bloque);
 
-  const actualizarTotal = () => {
-    const producto = RepositorioNegocio.productos.find(
-      p => String(p.id) === el('venta-producto-id').value
-    );
-    const cantidad = Number(el('venta-cantidad').value) || 0;
-    const descuento = Math.min(Math.max(Number(el('venta-descuento').value) || 0, 0), 100);
+  el('venta-descuento').addEventListener('input', dibujarCarrito);
+  form.addEventListener('reset', () => setTimeout(dibujarCarrito));
 
-    el('venta-total-previo').textContent = formatoMoneda(
-      producto ? Number(producto.precio_venta) * cantidad * (1 - descuento / 100) : 0
-    );
-  };
+  // Se ejecuta antes que el envío de app.js, que solo conoce un producto por venta.
+  form.parentElement.addEventListener('submit', e => {
+    if (e.target !== form) return;
+    e.preventDefault();
+    e.stopPropagation();
+    procesarVentaCarrito(form);
+  }, true);
 
-  ['venta-producto-id', 'venta-cantidad', 'venta-descuento'].forEach(id => {
-    ['input', 'change'].forEach(evento => el(id).addEventListener(evento, actualizarTotal));
-  });
-  form.addEventListener('reset', () => setTimeout(actualizarTotal));
+  dibujarCarrito();
 }
 
 
@@ -519,15 +534,20 @@ const esc = texto =>
 
 function abrirComprobante(v) {
   const negocio = ConexionDB.obtenerEmprendimientoActual()?.nombre || 'Mi negocio';
-  const cantidad = Number(v.cantidad);
-  const total = Number(v.total_venta);
 
-  // Las ventas anteriores no guardaron el precio unitario: se deduce del total.
-  const unitario = v.precio_unitario !== null && v.precio_unitario !== undefined
-    ? Number(v.precio_unitario)
-    : total / cantidad;
+  // Una venta puede tener varias líneas (varios productos).
+  const lineas = (v.lineas && v.lineas.length ? v.lineas : [v]).map(l => {
+    const cantidad = Number(l.cantidad);
+    const total = Number(l.total_venta);
+    // Las ventas anteriores no guardaron el precio unitario: se deduce del total.
+    const unitario = l.precio_unitario !== null && l.precio_unitario !== undefined
+      ? Number(l.precio_unitario)
+      : total / cantidad;
+    return { nombre: l.nombre_producto, cantidad, total, unitario, subtotal: unitario * cantidad };
+  });
 
-  const subtotal = unitario * cantidad;
+  const subtotal = lineas.reduce((t, l) => t + l.subtotal, 0);
+  const total = lineas.reduce((t, l) => t + l.total, 0);
   const descuento = Math.max(subtotal - total, 0);
   const hayDescuento = descuento > 0.005;
   const porcentaje = Number(v.descuento_porcentaje) > 0 ? ` (${Number(v.descuento_porcentaje)}%)` : '';
@@ -539,13 +559,17 @@ function abrirComprobante(v) {
     `Comprobante N° ${numero}`,
     fecha,
     '',
-    `${cantidad} x ${v.nombre_producto}`,
+    ...lineas.map(l => `${l.cantidad} x ${l.nombre}: ${formatoMoneda(l.subtotal)}`),
     ...(hayDescuento ? [`Descuento${porcentaje}: -${formatoMoneda(descuento)}`] : []),
     `Total: ${formatoMoneda(total)}`,
     `Pago: ${nombrePago(v.forma_pago)}`,
     '',
     'Documento no válido como factura.'
   ].join('\n');
+
+  const filasProductos = lineas.map(l =>
+    `<div class="fila"><span>${esc(l.cantidad)} × ${esc(l.nombre)}<br><small style="color:#64748b">${formatoMoneda(l.unitario)} c/u</small></span><span>${formatoMoneda(l.subtotal)}</span></div>`
+  ).join('');
 
   const html = `<!DOCTYPE html>
 <html lang="es"><head><meta charset="UTF-8">
@@ -573,8 +597,7 @@ function abrirComprobante(v) {
   ${v.anulada ? '<div class="anulada">VENTA ANULADA</div>' : ''}
   <div class="fila"><span>Fecha</span><span>${esc(fecha)}</span></div>
   <div class="linea"></div>
-  <div class="fila"><span>${esc(cantidad)} × ${esc(v.nombre_producto)}</span><span>${formatoMoneda(subtotal)}</span></div>
-  <div class="fila"><span>Precio unitario</span><span>${formatoMoneda(unitario)}</span></div>
+  ${filasProductos}
   ${hayDescuento ? `<div class="fila"><span>Descuento${esc(porcentaje)}</span><span>-${formatoMoneda(descuento)}</span></div>` : ''}
   <div class="linea"></div>
   <div class="fila total"><span>TOTAL</span><span>${formatoMoneda(total)}</span></div>
@@ -1053,13 +1076,16 @@ function exportarVentas() {
 
   const { desde, hasta, todas } = ultimoReporte;
 
+  const numeroDe = new Map();
+  agruparVentas(todas).forEach(g => g.lineas.forEach(l => numeroDe.set(l.id, g.id)));
+
   const filas = todas.map(v => {
     const cantidad = Number(v.cantidad);
     const total = Number(v.total_venta);
     const tieneCosto = v.costo_unitario !== null && v.costo_unitario !== undefined;
 
     return {
-      'N° comprobante': String(v.id).padStart(8, '0'),
+      'N° comprobante': String(numeroDe.get(v.id)).padStart(8, '0'),
       'Fecha': fechaVenta(v.fecha),
       'Producto': v.nombre_producto,
       'Cantidad': cantidad,
@@ -1157,3 +1183,193 @@ document.addEventListener('DOMContentLoaded', () => {
   agregarBotonExcel('tabla-historial-ventas', exportarVentas);
   agregarBotonExcel('tabla-productos-body', exportarInventario);
 });
+
+
+/* 15. VENTAS CON VARIOS PRODUCTOS (CARRITO)
+   Cada producto del carrito queda como una línea en "ventas"; todas las líneas
+   de una misma venta comparten el mismo comprobante_id.
+   Requiere la función registrar_venta_multiple de Supabase. */
+
+let carrito = []; // [{ producto_id, cantidad }]
+let procesandoCarrito = false;
+
+const buscarProducto = id =>
+  RepositorioNegocio.productos.find(p => String(p.id) === String(id));
+
+// Junta las líneas que pertenecen a la misma venta. Las ventas anteriores
+// (sin comprobante_id) quedan como ventas de una sola línea.
+function agruparVentas(lineas) {
+  const mapa = new Map();
+
+  lineas.forEach(l => {
+    const clave = l.comprobante_id || `v${l.id}`;
+    if (!mapa.has(clave)) mapa.set(clave, []);
+    mapa.get(clave).push(l);
+  });
+
+  return [...mapa.values()].map(ls => {
+    const base = ls.reduce((a, b) => (Number(b.id) < Number(a.id) ? b : a));
+    return {
+      ...base, // el número de comprobante es el menor id de la venta
+      lineas: ls,
+      nombre_producto: ls.length === 1
+        ? ls[0].nombre_producto
+        : ls.map(l => `${l.nombre_producto} ×${l.cantidad}`).join(', '),
+      cantidad: ls.reduce((t, l) => t + Number(l.cantidad), 0),
+      total_venta: ls.reduce((t, l) => t + Number(l.total_venta), 0),
+      anulada: ls.every(l => l.anulada)
+    };
+  });
+}
+
+function agregarAlCarrito() {
+  const id = el('venta-producto-id').value;
+  const cantidad = Number(el('venta-cantidad').value);
+
+  if (!id) {
+    alert('Seleccioná un producto.');
+    return false;
+  }
+  if (!Number.isSafeInteger(cantidad) || cantidad <= 0) {
+    alert('Ingresá una cantidad válida, mayor que cero.');
+    return false;
+  }
+
+  const producto = buscarProducto(id);
+  if (!producto) return false;
+
+  const enCarrito = carrito.find(i => String(i.producto_id) === String(id));
+  const nuevaCantidad = (enCarrito ? enCarrito.cantidad : 0) + cantidad;
+
+  if (nuevaCantidad > Number(producto.stock)) {
+    alert(`Stock insuficiente. De "${producto.nombre}" quedan ${producto.stock} unidades.`);
+    return false;
+  }
+
+  if (enCarrito) enCarrito.cantidad = nuevaCantidad;
+  else carrito.push({ producto_id: producto.id, cantidad });
+
+  el('venta-producto-id').value = '';
+  el('venta-cantidad').value = 1;
+  dibujarCarrito();
+  return true;
+}
+
+function dibujarCarrito() {
+  const caja = el('venta-carrito');
+  if (!caja) return;
+
+  // Si un producto del carrito ya no existe, se quita.
+  carrito = carrito.filter(i => buscarProducto(i.producto_id));
+  caja.replaceChildren();
+
+  if (!carrito.length) {
+    const vacio = document.createElement('p');
+    vacio.className = 'panel-desc';
+    vacio.style.cssText = 'margin:0;font-size:.84rem;';
+    vacio.textContent = 'El carrito está vacío. Elegí un producto, indicá la cantidad y tocá "Agregar al carrito".';
+    caja.appendChild(vacio);
+  } else {
+    const lista = document.createElement('div');
+    lista.className = 'quick-stats-box';
+
+    carrito.forEach((item, indice) => {
+      const producto = buscarProducto(item.producto_id);
+
+      const fila = document.createElement('div');
+      fila.className = 'stat-row';
+
+      const detalle = document.createElement('span');
+      detalle.textContent = `${item.cantidad} × ${producto.nombre}`;
+
+      const derecha = document.createElement('span');
+      derecha.style.cssText = 'display:flex;align-items:center;gap:10px;';
+
+      const importe = document.createElement('strong');
+      importe.textContent = formatoMoneda(Number(producto.precio_venta) * item.cantidad);
+
+      const quitar = document.createElement('button');
+      quitar.type = 'button';
+      quitar.textContent = 'Quitar';
+      quitar.style.cssText =
+        'background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger-border);padding:5px 9px;border-radius:6px;font-weight:700;font-size:.74rem;';
+      quitar.addEventListener('click', () => {
+        carrito.splice(indice, 1);
+        dibujarCarrito();
+      });
+
+      derecha.append(importe, quitar);
+      fila.append(detalle, derecha);
+      lista.appendChild(fila);
+    });
+
+    caja.appendChild(lista);
+  }
+
+  // Total a cobrar (con el descuento aplicado a toda la venta).
+  const descuento = Math.min(Math.max(Number(el('venta-descuento')?.value) || 0, 0), 100);
+  const subtotal = carrito.reduce(
+    (t, i) => t + Number(buscarProducto(i.producto_id).precio_venta) * i.cantidad, 0
+  );
+  const previo = el('venta-total-previo');
+  if (previo) previo.textContent = formatoMoneda(subtotal * (1 - descuento / 100));
+}
+
+async function procesarVentaCarrito(form) {
+  if (procesandoCarrito) return;
+
+  // Si no se tocó "Agregar" pero hay un producto elegido, se agrega solo.
+  if (!carrito.length && el('venta-producto-id').value) {
+    if (!agregarAlCarrito()) return;
+  } else if (carrito.length && el('venta-producto-id').value) {
+    if (!confirm('Hay un producto elegido que no agregaste al carrito. ¿Procesar la venta sin él?')) return;
+  }
+
+  if (!carrito.length) {
+    alert('Agregá al menos un producto a la venta.');
+    return;
+  }
+
+  const formaPago = el('venta-forma-pago').value;
+  if (!formaPago) {
+    alert('Seleccioná la forma de pago.');
+    return;
+  }
+
+  const boton = form.querySelector('[type="submit"]');
+  const textoOriginal = boton.textContent;
+  procesandoCarrito = true;
+  boton.disabled = true;
+  boton.textContent = 'Registrando venta...';
+
+  try {
+    const { data, error } = await clienteSupabase.rpc('registrar_venta_multiple', {
+      p_items: carrito.map(i => ({ producto_id: Number(i.producto_id), cantidad: i.cantidad })),
+      p_forma_pago: formaPago,
+      p_descuento_porcentaje: Number(el('venta-descuento').value) || 0,
+      p_observaciones: el('venta-observaciones').value.trim()
+    });
+
+    if (error) {
+      console.error('Error al registrar venta:', error.message);
+      alert(`❌ Error al registrar venta: ${error.message}`);
+      return;
+    }
+
+    RepositorioNegocio.productos = await ConexionDB.obtenerProductos();
+    await RepositorioNegocio.calcularVentasHoy();
+
+    carrito = [];
+    form.reset();
+    actualizarInterfaz();
+
+    alert(`✅ ¡Venta registrada! Total: ${formatoMoneda(data?.total_venta)}`);
+  } catch (error) {
+    console.error('Error al procesar la venta:', error);
+    alert('❌ Ocurrió un error al registrar la venta. Revisá los datos e intentá nuevamente.');
+  } finally {
+    procesandoCarrito = false;
+    boton.disabled = false;
+    boton.textContent = textoOriginal;
+  }
+}
