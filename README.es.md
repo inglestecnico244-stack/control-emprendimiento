@@ -164,7 +164,7 @@ MiControl se desarrolló con la ayuda de herramientas de inteligencia artificial
 
 ## Autores
 
-[Nombres de los integrantes del grupo]
+Vazquez Andrea, Ojeda Daiana
 
 ## Licencia
 
