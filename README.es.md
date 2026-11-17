@@ -160,7 +160,7 @@ Desarrollado como Proyecto Final Integrador de **Inglés Técnico II**, I.S.F.T.
 
 ## Uso de inteligencia artificial
 
-MiControl se desarrolló con la ayuda de herramientas de inteligencia artificial. ChatGPT produjo la primera versión del código, y Claude (Anthropic) se usó después para la revisión de código, la depuración, el diseño de la base de datos y la documentación. El equipo probó manualmente cada cambio y tomó las decisiones sobre el producto.
+MiControl se desarrolló con la ayuda de herramientas de inteligencia artificial. Gemini inicio el proyecto, ChatGPT produjo otra versión del código, y Claude (Anthropic) se usó después para la revisión de código, la depuración, el diseño de la base de datos y la documentación. El equipo probó manualmente cada cambio y tomó las decisiones sobre el producto.
 
 ## Autores
 
